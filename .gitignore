@@ -1,0 +1,17 @@
+# 실험이 남기는 부산물
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+node_modules/
+build/
+target/
+dist/
+*.class
+*.log
+
+# 비밀
+.env
+.env.*
+
+.DS_Store
