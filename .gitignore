@@ -16,17 +16,8 @@ dist/
 
 .DS_Store
 
-# 참고용으로 받아 둔 남의 저장소
+# 참고용으로 받아 둔 남의 저장소·논문 원문·입력 데이터·실험 산출물. 노트와 스크립트만 올린다.
 */lab/repos/
-
-# 받아 온 평가 데이터
-*/lab/inputs/abspyramid/
-*/lab/inputs/abstractatomic/
-
-# 수집한 네트워크 말뭉치 원본
-*/lab/inputs/net-corpus/raw/
-# 실험 23 의 LLM 캐시와 색인 (크다)
-*/lab/runs/23-cache/
-*/lab/runs/23-hr2-57/
-*/lab/runs/23-net-*/idx/
-*/lab/runs/23-arch-*/idx/
+*/lab/sources/
+*/lab/inputs/
+*/lab/runs/
