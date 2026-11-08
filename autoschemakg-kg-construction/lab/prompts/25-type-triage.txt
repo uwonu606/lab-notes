@@ -1,0 +1,16 @@
+A new document type has just been approved for an internal document index of a network equipment verification group. Documents of this type were indexed before the type existed, so some of them were filed under other types. Find them.
+
+NEW TYPE
+{type_card}
+
+DOCUMENTS (number | title | first section headings)
+{documents}
+
+Steps:
+1. For each document, decide whether its purpose is the purpose of the new type, judging by its title and section headings together. A document that only mentions the same device or incident but serves another purpose (a test report, an incident report, minutes) is not of the new type.
+2. List the numbers of the documents of the new type.
+
+Done when every document has been judged once.
+
+Reply with JSON only:
+{"numbers": [3, 17]}

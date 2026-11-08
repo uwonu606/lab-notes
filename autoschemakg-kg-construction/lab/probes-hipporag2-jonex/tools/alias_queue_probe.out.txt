@@ -1,0 +1,21 @@
+embedding failed for 0 names: []
+glossary entries 153, glossary names 287, candidate names not in glossary 739
+
+=== known missing short forms (from round 22 answer-seen glossary)
+  'git rebase' <- 'rebase': not embeddable or not a candidate
+  'git commit --amend' <- 'amend': not embeddable or not a candidate
+  'Choi 2018' <- 'UFET': not embeddable or not a candidate
+  'Choi 2018' <- 'ultra-fine typing': not embeddable or not a candidate
+
+=== review queue size if each candidate goes only to its best entry and cosine >= t
+  t=0.6: queued pairs 462, known missing found 0/4
+  t=0.65: queued pairs 296, known missing found 0/4
+  t=0.7: queued pairs 195, known missing found 0/4
+  t=0.75: queued pairs 127, known missing found 0/4
+  t=0.8: queued pairs 75, known missing found 0/4
+
+=== review queue size if top-k candidates per entry
+  k=1: queued pairs 153, known missing found 0/4
+  k=3: queued pairs 459, known missing found 0/4
+  k=5: queued pairs 765, known missing found 0/4
+  k=10: queued pairs 1530, known missing found 0/4

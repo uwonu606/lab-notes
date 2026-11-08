@@ -1,0 +1,26 @@
+You write a split plan: a reusable rule set that cuts one family of internal Markdown documents into retrieval chunks. The documents come from a network equipment verification group (test reports, incident reports, weekly reports, device architecture docs, test procedures, release notes, minutes, interop reports, and others). Authors in one family share a template but drift from it: they rename headings, merge or drop sections, add extra ones, or write headings as bold or bracketed lines.
+
+The plan is a wrapper, like a scraper's selectors: you write it once from this sample, and code applies it to every later document of the same family without calling you. So write rules for the family, not for this one document: anchor each pattern on the stable core word of the heading and allow the variants an author would plausibly write (numbering, Korean/English synonyms, spacing).
+
+DOCUMENT TYPES (type | fields: name = description, * required)
+{schemas}
+
+SAMPLE DOCUMENT
+Heading candidates the engine sees (H = Markdown heading with level, P = single-line bold / bracketed / numbered paragraph):
+{candidates}
+
+Full text:
+<<<
+{document}
+>>>
+{feedback}
+Steps:
+1. Pick doc_type: the type above whose fields fit this document. If none fits, use "new:<snake_case_name>" and list its fields in new_fields (name, description, required), 3 to 7 fields, always including "meta" for the title/header block.
+2. Write heading_rules: one rule per section kind, {"pattern": Python regex searched in the normalized heading text (no # or **), case-insensitive, "field": a field of the chosen type or "other", or a list of fields for a merged heading}. Every heading candidate except the document title must match some rule, unless it is a sub-heading that belongs to its parent's field (the engine gives an unmatched deeper heading its parent's field). A merged heading such as "원인 및 조치" gets a list of every field it holds, e.g. ["root_cause", "action"]; list its rule before the single-field rules.
+3. Set pseudo_headings: true when this family writes section titles as P candidates, false when only H candidates are section titles.
+4. Set fields: for each field, a split policy {"split": "whole" | "blocks" | "table_rows", "max_chars": 300..2000}. Use "whole" when the section answers one question as a unit (a cause analysis, a procedure's expected result); "blocks" to pack paragraphs, lists and code up to max_chars; "table_rows" when the section is mainly a table whose rows are independent facts (the engine repeats the header row in each chunk's label).
+
+Done when: every non-title heading candidate is covered by a rule or is a sub-heading of a covered section, every required field of the chosen type that this family writes has a rule, and every pattern compiles. Authors sometimes drop a section; a field the sample does not contain still gets a rule anchored on its usual heading words.
+
+Reply with JSON only:
+{"doc_type": "...", "new_fields": [], "heading_rules": [{"pattern": "...", "field": "..."}], "pseudo_headings": false, "fields": {"<field>": {"split": "blocks", "max_chars": 1000}}}

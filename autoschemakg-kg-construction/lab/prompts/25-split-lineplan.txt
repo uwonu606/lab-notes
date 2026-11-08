@@ -1,0 +1,24 @@
+You write a line plan: a reusable rule set that finds the section headings of one family of internal documents and cuts the documents into retrieval chunks. The documents come from a network equipment verification group (test reports, incident reports, weekly reports, device architecture docs, test procedures, release notes, minutes, interop reports, and others). They were converted from Word or PDF into plain text, so heading markup is gone: a heading is now an ordinary line, and the text may carry hard line breaks, page headers and footers (document numbers, page numbers, confidentiality marks), tables flattened into space-separated lines, and lost list bullets. Sometimes a heading is glued to the start of the paragraph that follows it ("4. 원인 분석 절체 시 BFD 가 ...") or its numbering is mangled ("4 원인 분석", "(4) 원인 분석", "4.원인 분석", "IV. 결과").
+
+The plan is a wrapper, like a scraper's selectors: you write it once from this sample, and code applies it to every later document of the same family without calling you. Code tests each rule's pattern against the first 60 characters of every line (leading spaces stripped); the first rule that matches makes that line a section heading with the rule's field, and the section runs until the next heading line. Lines inside Markdown code blocks and tables are skipped.
+
+DOCUMENT TYPES (type | fields: name = description, * required)
+{schemas}
+
+SAMPLE DOCUMENT (each line below is one line of the converted text)
+<<<
+{document}
+>>>
+{feedback}
+Steps:
+1. Find the section headings. A heading is the line where a new section of the template starts: its title words name the section's purpose (개요, 시험 환경, 원인, 조치, 결과, Summary, Root Cause ...), and it is often numbered or bracketed. The document title, author/date lines, page headers and footers, list items and table rows are body, not headings. If the document has no sections at all (a free-form memo or chat log), reply {"formless": true} and stop.
+2. Pick doc_type: the type above whose fields fit this document. If none fits, use "new:<snake_case_name>" and list its fields in new_fields (name, description, required), 3 to 7 fields, always including "meta" for the title/header block.
+3. Write heading_rules: one rule per section kind, {"pattern": Python regex, case-insensitive, "field": a field of the chosen type or "other", or a list of fields for a merged heading such as "원인 및 조치"}. Anchor each pattern at the line start with ^, then an optional numbering part, then the stable core word of the heading, e.g. ^\s*(\(?\d{1,2}[.)]?\s*|[IVXⅠ-Ⅹ]+\.\s*|\[)?\s*(시험\s*환경|test\s*setup). Write the numbering part so it accepts every form listed above, and the core word part so it accepts the synonyms and spacing an author of this family would plausibly write. Sub-headings (4.1, 4.2) stay inside their parent section; give them no rule.
+4. Check each pattern against every line of the sample: it matches its own heading line, also when that line continues with body text, and it matches no body line. A word that also appears at the start of body sentences needs the numbering or bracket part to be required, not optional.
+5. Set fields: for each field, a split policy {"split": "whole" | "blocks" | "table_rows", "max_chars": 300..2000}. Use "whole" when the section answers one question as a unit (a cause analysis, a procedure's expected result); "blocks" to pack paragraphs, lists and code up to max_chars; "table_rows" when the section is mainly a table whose rows are independent facts.
+
+Done when: every section heading line of the sample matches exactly one intended rule, each rule matches at most 2 lines of the sample, every required field of the chosen type that this family writes has a rule, and every pattern compiles. Authors sometimes drop a section; a field the sample does not contain still gets a rule anchored on its usual heading words.
+
+Reply with JSON only:
+{"doc_type": "...", "new_fields": [], "heading_rules": [{"pattern": "...", "field": "..."}], "fields": {"<field>": {"split": "blocks", "max_chars": 1000}}}
+or {"formless": true}

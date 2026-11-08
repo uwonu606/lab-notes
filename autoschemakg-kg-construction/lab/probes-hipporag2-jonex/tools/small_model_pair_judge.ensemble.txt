@@ -1,0 +1,7 @@
+AND tp 16 fp 1 P_sample 0.941 P_full 0.786 R 0.176
+OR tp 39 fp 6 P_sample 0.867 P_full 0.599 R 0.429
+exaone raw sample ['No', 'No', 'No', 'No', 'No']
+fp examples [('gemma4:e2b-it-qat', 'PR stack', 'PR의 base', 0.607), ('gemma4:e2b-it-qat', 'amend', 'commit', 0.614), ('llama3.1:8b', 'commit body', 'PR body', 0.641), ('llama3.1:8b', 'Hearst 1992', 'Hearst patterns', 0.647), ('llama3.1:8b', 'amend', 'commit', 0.614), ('llama3.1:8b', 'MetaMap', 'Metathesaurus', 0.753), ('llama3.1:8b', 'Apple', 'iPhone 15', 0.665)]
+tp examples [('small, ordered commits', '작고 순서가 있는 커밋들', 0.681), ('squash commit', 'squash 커밋', 0.759), ('merge commit', '머지 커밋', 0.601), ('conceptualization without context', '문맥 없는 개념화', 0.777), ('cosine', 'cosine 유사도', 0.799), ('small, ordered commits', '작고 순서 있는 커밋', 0.686), ('Keyphrase·term', 'Keyphrase·term extraction', 0.794), ('commit body', 'squash commit body', 0.794), ('새 커밋', '커밋', 0.797), ('critic', 'critic 모델', 0.76), ('squash commit body', 'squash 커밋의 본문', 0.653), ('Metathesaurus', 'UMLS Metathesaurus', 0.758)]
+gemma4:e2b-it-qat {'ko-ko': (5, 14), 'ko-en': (13, 47), 'en-en': (7, 30)}
+llama3.1:8b {'ko-ko': (2, 14), 'ko-en': (15, 47), 'en-en': (13, 30)}

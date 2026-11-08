@@ -1,0 +1,4 @@
+band [0.6,0.8): same 91, diff 396 (sampled 91)
+gemma4:e2b-it-qat: n=182 tp=25 fp=2 fn=66 tn=89 unparsable=0 precision(sample)=0.926 recall=0.275 precision(full band est.)=0.742 sec/call=1.59
+exaone3.5:2.4b: n=182 tp=0 fp=0 fn=91 tn=91 unparsable=0 precision(sample)=0.000 recall=0.000 precision(full band est.)=0.000 sec/call=0.70
+llama3.1:8b: n=182 tp=30 fp=5 fn=61 tn=86 unparsable=0 precision(sample)=0.857 recall=0.330 precision(full band est.)=0.580 sec/call=0.98

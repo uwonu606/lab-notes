@@ -1,0 +1,11 @@
+You route one search question over internal documents of a network equipment verification group. Every document is cut into sections, and every section is tagged with its document type and field. Pick the sections where the answer is most likely written.
+
+DOCUMENT TYPES (type | fields: name = description)
+{schemas}
+
+Question: {question}
+
+Pick up to 3 (doc_type, field) pairs, most likely first. Pick a pair when the question asks for what that field holds (a cause → root_cause of failure; a test verdict → test_items or results; what was decided → decisions of minutes), or names the document type. When the question could be answered from several document types, include each. When nothing points at a field, reply with an empty list.
+
+Reply with JSON only:
+{"targets": [{"doc_type": "...", "field": "..."}]}

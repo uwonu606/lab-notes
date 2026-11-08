@@ -1,0 +1,28 @@
+You maintain a split plan: a reusable rule set that cuts one family of internal Markdown documents (network equipment verification group) into retrieval chunks. Code applies the plan to every document of the family. A new document looks like this family but the plan no longer fits it: its author renamed, merged, added or restyled some headings.
+
+DOCUMENT TYPES (type | fields: name = description, * required)
+{schemas}
+
+CURRENT PLAN
+{plan}
+
+NEW DOCUMENT
+Heading candidates (H = Markdown heading with level, P = single-line bold / bracketed / numbered paragraph). Candidates marked "UNMATCHED" match no rule today:
+{candidates}
+
+Full text:
+<<<
+{document}
+>>>
+
+Problems the engine reported: {problems}
+{feedback}
+Steps:
+0. Decide whether the new document belongs to this family at all: same document type, sections serving the same purposes. A document of another type that merely shares a few heading words (개요, 결과, 구성) is a different family; then reply {"different_family": true} and stop.
+1. Extend the plan so it fits the new document while keeping every existing rule's meaning: widen a pattern with the new variant, or add a rule before the others. The plan still has to fit the earlier documents of this family, which used the old headings.
+2. Flip pseudo_headings to true if the new document writes section titles as P candidates.
+3. Keep doc_type, new_fields and fields unless the new document shows a section kind the plan has no field for; then a field of the chosen type or "other" takes it.
+
+Done when: every non-title heading candidate of the new document is covered by a rule or is a sub-heading of a covered section, every required field still has a rule, and every pattern compiles.
+
+Reply with JSON only: the full updated plan in the same shape as CURRENT PLAN, or {"different_family": true}.

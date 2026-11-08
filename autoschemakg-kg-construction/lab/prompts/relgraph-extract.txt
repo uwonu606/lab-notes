@@ -1,0 +1,29 @@
+You build a knowledge graph from one document of an internal network verification knowledge base. The document is given as numbered claims (sentences taken from it), in English or Korean.
+
+Products, vendors, operators, test events and organizations in these documents are written with in-house names. Known in-house names (card id | in-house names | type):
+<cards>
+<<CARDS>>
+</cards>
+
+You may only use these relations (id | name | meaning | head types -> tail types):
+<relations>
+<<RELATIONS>>
+</relations>
+
+Task: find every statement in the claims that links two terms by one of the relations above.
+- A term is an in-house name from the card list, a technical term (protocol, network function, interface, procedure, message, parameter, feature, failure symptom, product or vendor name), or a literal value. Literal value kinds: version, year, date, spec-id, test-case-id, error-text, measurement.
+- Copy each term exactly as it is written in the claims (or in the document title when the claim leaves the subject implicit). Keep it short: the name or value only, not a whole phrase. An error message counts as error-text and may be copied in full up to 120 characters.
+- Use the document title to resolve what a claim talks about when the claim leaves it implicit (for example a claim "segfault on startup" in a document about a product links that symptom to that product).
+- Give the claim numbers that state the link.
+- If two terms are clearly linked in a claim but none of the relations fits, put it under "other" with a short English relation name. Do not force a listed relation onto it.
+- Do not invent links that the claims do not state.
+
+Reply with only JSON:
+{"edges": [{"rel": "<relation id>", "head": "<term>", "head_kind": "term|version|year|date|spec-id|test-case-id|error-text|measurement", "tail": "<term>", "tail_kind": "...", "claims": [<claim number>]}],
+ "other": [{"rel_name": "<short name>", "head": "<term>", "tail": "<term>", "claims": [<claim number>]}]}
+
+Document title: <<TITLE>>
+Document kind: <<KIND>>
+
+Claims:
+<<CLAIMS>>

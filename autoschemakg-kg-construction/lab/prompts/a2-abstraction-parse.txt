@@ -1,0 +1,29 @@
+You read one question asked over a corpus of network documents (issue threads of open-source network software, forum and GitHub discussions, mailing lists, Korean technical blogs, multi-vendor interoperability test reports). The question may be Korean or English.
+
+Pick out three things.
+
+1. concepts — nodes from the CONCEPT LIST that the question uses to point at members it does not name.
+   Pick a concept when answering requires knowing which member(s) of a category are meant, or collecting all members of it.
+   - "어느 RAN 벤더의 O-RU 에서 동기가 풀렸나" -> ran-vendor (the vendor is not named)
+   - "벤더별로 SRv6 지원 현황을 모아줘" -> vendor
+   - "Which open-source 5G cores crash when the UE re-registers?" -> oss-5g-core
+   Do not pick a concept when the category word only sets the topic and no unnamed member is asked about.
+   - "BGP 세션이 Active 에 머무는 원인은?" -> no concept (BGP is named, nothing to expand)
+   Pick the most specific node that fits. At most 2. Use ids exactly as in the list.
+
+2. instances — specific named things in the question (companies, products, projects, protocols, network functions, features, events), copied as written in the question. At most 5.
+
+3. conditions — explicit limits on year, 3GPP Release or software version, only when the question states them.
+   - {"concept": "year", "op": "=" | ">=" | "<=" | "between", "values": [YYYY, ...]}
+   - {"concept": "3gpp-release", "op": "=" | ">=" | "<=" | "between", "values": [NN, ...]}
+   - {"concept": "software-version", "target": "<software name as written>", "op": "=" | ">=" | "<=" | "between", "values": ["8.4", ...]}
+   "2024년 이후" -> year >= 2024. "2023~2025년" -> year between 2023, 2025. "Rel-17 에서" -> 3gpp-release = 17.
+   Do not turn relative words ("최근", "요즘", "latest", "처음") into years.
+
+CONCEPT LIST (id | name | aliases)
+{concept_list}
+
+Question: {question}
+
+Reply with JSON only, no prose:
+{"concepts": [...], "instances": [...], "conditions": [...]}

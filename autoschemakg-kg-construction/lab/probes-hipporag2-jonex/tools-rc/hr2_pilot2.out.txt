@@ -1,0 +1,6 @@
+PPR pw=0.05 top-1 chunk counts (top 5): [('commit-pr-workflow#05', 5), ('concept-extraction-papers#26', 5), ('commit-pr-workflow#02', 2), ('doc-parsing-chunking#03', 2), ('doc-parsing-chunking#02', 2)]
+passage degree of those: {'commit-pr-workflow#05': 20, 'concept-extraction-papers#26': 15, 'commit-pr-workflow#02': 15, 'doc-parsing-chunking#03': 20, 'doc-parsing-chunking#02': 20} median passage degree 12
+dense      1000자 0.475 2500자 0.713 5000자 0.838 @5 0.838
+pack5      1000자 0.450 2500자 0.725 5000자 0.775 
+pack5_thr  1000자 0.588 2500자 0.738 5000자 0.838 
+maxsim     1000자 0.537 2500자 0.738 5000자 0.825 @5 0.825

@@ -1,0 +1,19 @@
+Below is a list of entries from a glossary of network-verification terms (5G core, routing, transport, O-RAN, interoperability tests). Each line is: id | name | other names | meaning.
+
+<entries>
+<<ENTRIES>>
+</entries>
+
+Read the question and find the technical terms in it: products, protocols, network functions, interfaces, procedures, messages, error causes, features, organisations. The question may be in Korean or English, and an entry may be written in a different language from the question.
+
+For each term:
+- If an entry in the list names the same thing (the same term, its abbreviation or expansion, another spelling, or a translation), link the term to that entry's id. A term may link to two entries only when it names both (for example "N4 PFCP session" names the N4 entry and the PFCP entry).
+- If no entry names the same thing, put the term under "unregistered". Do not link to an entry that is only related, broader or narrower.
+- Skip everyday words that are not technical terms.
+
+Reply format:
+{"links": [{"term": "<words copied from the question>", "entry": "<id>"}], "unregistered": ["<words copied from the question>"]}
+
+<question>
+<<QUESTION>>
+</question>

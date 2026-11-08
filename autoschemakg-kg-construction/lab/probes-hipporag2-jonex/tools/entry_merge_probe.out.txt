@@ -1,0 +1,47 @@
+entries 153, entry pairs 11628
+
+=== known same-target entry pairs (round 22 answer-seen merges)
+  'git rebase' ~ 'rebase': cosine 0.846, rank of 'rebase' among neighbours of 'git rebase': 1/152; top3 = [('rebase', 0.846), ('git', 0.736), ('GitHub', 0.667)]
+  'git commit --amend' ~ 'amend': cosine 0.735, rank of 'amend' among neighbours of 'git commit --amend': 1/152; top3 = [('amend', 0.735), ('커밋', 0.694), ('git', 0.688)]
+  'Choi 2018' ~ 'UFET': cosine 0.508, rank of 'UFET' among neighbours of 'Choi 2018': 27/152; top3 = [('ultra-fine typing', 0.902), ('entity typing', 0.804), ('FIGER', 0.729)]
+  'Choi 2018' ~ 'ultra-fine typing': cosine 0.902, rank of 'ultra-fine typing' among neighbours of 'Choi 2018': 1/152; top3 = [('ultra-fine typing', 0.902), ('entity typing', 0.804), ('FIGER', 0.729)]
+
+=== review queue (entry pairs with cosine >= t)
+  t=0.6: queued pairs 244, known same found 3/4
+  t=0.65: queued pairs 113, known same found 3/4
+  t=0.7: queued pairs 61, known same found 3/4
+  t=0.75: queued pairs 33, known same found 2/4
+  t=0.8: queued pairs 22, known same found 2/4
+  t=0.85: queued pairs 8, known same found 1/4
+
+=== top 30 entry pairs
+  0.906  KnowComp ~ KnowComp 서베이
+  0.902  ultra-fine typing ~ Choi 2018 <known>
+  0.890  커밋 본문 ~ squash merge
+  0.881  keyphrase extraction ~ 용어 추출
+  0.878  Hearst 패턴 ~ Roller 2018
+  0.861  Is ChatGPT A Good Keyphrase Generator? ~ ChatGPT
+  0.854  keyphrase extraction ~ keyphrase
+  0.854  concept extraction ~ 임상 concept extraction
+  0.848  상위어 ~ hyponym
+  0.846  rebase ~ git rebase <known>
+  0.838  git ~ GitHub
+  0.830  KGGen ~ KGGen v2
+  0.825  keyphrase ~ present keyphrase
+  0.821  용어 추출 ~ concept extraction
+  0.816  커밋 ~ 커밋 본문
+  0.808  임상 concept extraction ~ concept normalization
+  0.806  커밋 ~ merge commit
+  0.805  keyphrase extraction ~ CopyRNN
+  0.804  entity typing ~ Choi 2018
+  0.802  conceptualization ~ 문맥 없는 개념화
+  0.801  브랜치 ~ branch --contains
+  0.801  keyphrase extraction ~ concept extraction
+  0.800  FIGER ~ Gillick
+  0.798  LLM 검증 ~ LLM
+  0.791  PR ~ PR 본문
+  0.783  schema induction ~ schema
+  0.782  커밋 ~ scoped-commit 스킬
+  0.773  브랜치 ~ feature 브랜치
+  0.770  Hearst 패턴 ~ Hearst 1992
+  0.769  Intention KG ~ KG

@@ -1,0 +1,21 @@
+You check pinned facts on internal glossary cards. A pinned fact is treated as authoritative, so a fact that the source claims do not support will make answers wrong.
+
+The facts use in-house names. The claims are original documents and use public names. Name table (card id | in-house name | public name):
+<names>
+<<NAMES>>
+</names>
+
+For each fact below, read only its source claims (with their document titles) and judge:
+- "full": every part of the fact is stated or directly implied by the claims.
+- "partial": the core is supported but some detail (a number, version, date, actor, cause, or a generalization such as "always", "every", "only") goes beyond or contradicts the claims.
+- "none": the claims do not support the fact, or contradict it.
+
+For "partial" and "none", write "fixed": a corrected fact in Korean, one sentence of at most 120 characters, using the same in-house names, that the claims fully support and that still says something useful about the card. If nothing useful can be said, set "fixed" to null.
+
+Facts:
+<facts>
+<<FACTS>>
+</facts>
+
+Reply with only JSON:
+{"verdicts": [{"fact": "<fact id>", "support": "full|partial|none", "problem": "<short reason, empty for full>", "fixed": "<corrected fact or null, only for partial/none>"}]}

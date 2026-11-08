@@ -1,0 +1,8 @@
+chunks 57, questions 40
+sum of min-max normalized dense scores per question: mean 22.74, min 12.15, max 32.40
+official HippoRAG 2 weight 0.05: passage reset mass 1.14; if phrase seed mass 1.0 -> passage share after normalization 0.53
+official HippoRAG 2 weight 0.05: passage reset mass 1.14; if phrase seed mass 2.5 -> passage share after normalization 0.31
+official HippoRAG 2 weight 0.05: passage reset mass 1.14; if phrase seed mass 5.0 -> passage share after normalization 0.19
+AutoSchemaKG default weight 1.0: passage reset mass 22.74; if phrase seed mass 1.0 -> passage share after normalization 0.96
+AutoSchemaKG default weight 1.0: passage reset mass 22.74; if phrase seed mass 2.5 -> passage share after normalization 0.90
+AutoSchemaKG default weight 1.0: passage reset mass 22.74; if phrase seed mass 5.0 -> passage share after normalization 0.82

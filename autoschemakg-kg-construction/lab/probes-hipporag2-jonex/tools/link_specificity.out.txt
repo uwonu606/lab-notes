@@ -1,0 +1,23 @@
+gold pairs 25 · candidate pairs 57
+
+=== Adamic-Adar sum 1/log(df)
+  >= 1.0769  found   4  P 0.50  R 0.08
+  >= 0.7240  found  10  P 0.20  R 0.08
+  >= 0.6599  found  16  P 0.19  R 0.12
+  >= 0.3530  found  48  P 0.52  R 1.00
+  >= 0.3069  found  57  P 0.44  R 1.00
+  best P with R >= 0.9: (0.35295612386476116, 48, 0.5208333333333334, 1.0)
+
+=== node specificity sum 1/df (HippoRAG)
+  >= 0.1882  found   4  P 0.50  R 0.08
+  >= 0.1294  found  10  P 0.20  R 0.08
+  >= 0.0973  found  16  P 0.19  R 0.12
+  >= 0.0588  found  48  P 0.52  R 1.00
+  >= 0.0385  found  57  P 0.44  R 1.00
+  best P with R >= 0.9: (0.058823529411764705, 48, 0.5208333333333334, 1.0)
+
+=== node specificity max 1/df
+  >= 0.0909  found  10  P 0.20  R 0.08
+  >= 0.0588  found  48  P 0.52  R 1.00
+  >= 0.0385  found  57  P 0.44  R 1.00
+  best P with R >= 0.9: (0.058823529411764705, 48, 0.5208333333333334, 1.0)

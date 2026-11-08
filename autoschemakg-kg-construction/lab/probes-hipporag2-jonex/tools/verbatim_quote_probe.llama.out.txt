@@ -1,0 +1,9 @@
+model llama3.1:8b · questions 40 · dense top-5 context · 192s · calls 40
+JSON parsed 40/40
+answers with >=1 quote 39/40
+quotes verbatim (whitespace-normalised substring of a retrieved chunk) 41/51
+answers whose quotes are all verbatim and non-empty 32/40
+answers with >=1 verbatim quote overlapping gold evidence (14-evidence.json) 19/40
+  of which questions where dense top-5 held >=1 gold chunk: 38/40
+empty replies after 4 attempts 0/40 · calls with retries 5
+max prompt_eval_count 2664 (num_ctx 8192)

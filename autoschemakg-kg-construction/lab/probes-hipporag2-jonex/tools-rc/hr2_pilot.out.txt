@@ -1,0 +1,22 @@
+triples 413 records(verbatim events) 246
+A dense (chunk)                            @5 0.838 (single 0.950 / bridge 0.725) | 1000자 0.475 2500자 0.713 5000자 0.838
+  graph tau=0.8: phrases 602 fact edges 406 synonym edges 80
+HR2 official-like tau=0.8 pw=0.05          @5 0.713 (single 0.900 / bridge 0.525) | 1000자 0.175 2500자 0.537 5000자 0.713
+HR2 official-like tau=0.8 pw=0.3           @5 0.825 (single 1.000 / bridge 0.650) | 1000자 0.200 2500자 0.537 5000자 0.825
+HR2 official-like tau=0.8 pw=1.0           @5 0.850 (single 1.000 / bridge 0.700) | 1000자 0.263 2500자 0.675 5000자 0.850
+  graph tau=0.9: phrases 602 fact edges 406 synonym edges 17
+HR2 official-like tau=0.9 pw=0.05          @5 0.725 (single 0.900 / bridge 0.550) | 1000자 0.150 2500자 0.487 5000자 0.725
+HR2 official-like tau=0.9 pw=0.3           @5 0.800 (single 0.950 / bridge 0.650) | 1000자 0.200 2500자 0.550 5000자 0.800
+HR2 official-like tau=0.9 pw=1.0           @5 0.838 (single 1.000 / bridge 0.675) | 1000자 0.250 2500자 0.650 5000자 0.838
+  graph tau=2.0: phrases 602 fact edges 406 synonym edges 0
+HR2 official-like tau=2.0 pw=0.05          @5 0.750 (single 0.900 / bridge 0.600) | 1000자 0.163 2500자 0.487 5000자 0.750
+HR2 official-like tau=2.0 pw=0.3           @5 0.800 (single 0.950 / bridge 0.650) | 1000자 0.212 2500자 0.537 5000자 0.800
+HR2 official-like tau=2.0 pw=1.0           @5 0.838 (single 1.000 / bridge 0.675) | 1000자 0.263 2500자 0.675 5000자 0.838
+  grounded-only facts 290
+HR2 grounded triples tau=0.8 pw=0.05       @5 0.725 (single 0.900 / bridge 0.550) | 1000자 0.250 2500자 0.412 5000자 0.738
+HR2 grounded triples tau=0.8 pw=0.3        @5 0.800 (single 0.950 / bridge 0.650) | 1000자 0.275 2500자 0.487 5000자 0.800
+  records as passage nodes 197, phrases 719, synonym edges 96
+HR2+records chunk-rank pw=0.05             @5 0.600 (single 0.800 / bridge 0.400) | 1000자 0.200 2500자 0.475 5000자 0.613
+HR2+records mixed-rank pw=0.05             @5 0.600 (single 0.800 / bridge 0.400) | 1000자 0.200 2500자 0.475 5000자 0.613
+HR2+records chunk-rank pw=0.3              @5 0.613 (single 0.850 / bridge 0.375) | 1000자 0.225 2500자 0.438 5000자 0.613
+HR2+records mixed-rank pw=0.3              @5 0.613 (single 0.850 / bridge 0.375) | 1000자 0.225 2500자 0.438 5000자 0.613

@@ -1,0 +1,63 @@
+chunks 57 new 5 old 52 gold pairs 25
+glossary word-boundary pairs 57 correct 25
+phrases (llama3.1:8b entity_relation, normalized) 602; glossary names 284
+new-doc phrases 88; of which appear only in new doc 87; already a glossary name 0
+
+== term-pair review items: new-doc phrase (not a glossary name) x glossary entry, best name cosine per entry
+  band [0.9,1.0): items 0  containment 0  distinct phrases 0
+  band [0.8,0.9): items 0  containment 0  distinct phrases 0
+  band [0.7,0.8): items 2  containment 0  distinct phrases 2
+  band [0.6,0.7): items 37  containment 1  distinct phrases 24
+  items >= 0.7 (cos, new phrase, glossary canonical, matched name, containment):
+    0.784  키워드 수집 | keyphrase extraction (keyword extraction) 
+    0.703  doclaynet | WordNet (wordnet) 
+
+== chunk pairs that approving term items would add (beyond glossary pairs), per band
+  band [0.9,1.0): new chunk pairs 0  in old gold 0
+  band [0.8,0.9): new chunk pairs 0  in old gold 0
+  band [0.7,0.8): new chunk pairs 15  in old gold 0
+  band [0.6,0.7): new chunk pairs 67  in old gold 0
+
+== HippoRAG-style synonym edges among all phrases (cos >= 0.8), new<->old crossing
+  all-phrase pairs in [0.9,1.0): 18   new<->old crossing: 0
+  all-phrase pairs in [0.8,0.9): 58   new<->old crossing: 1
+  all-phrase pairs in [0.7,0.8): 249   new<->old crossing: 8
+  all-phrase pairs in [0.6,0.7): 1260   new<->old crossing: 92
+  crossing pairs >= 0.8:
+    0.847  is a 계층 | 계층
+
+chunk vectors found in 12-cache/embeddings.json: 57/57
+== PPR (undirected, damping 0.5, node specificity, synonym edges >=0.8)
+  top-3/new chunk: candidates 15 correct 1 R 0.04 P 0.07  | not sharing a glossary term 10
+  top-5/new chunk: candidates 25 correct 3 R 0.12 P 0.12  | not sharing a glossary term 16
+  top-10/new chunk: candidates 50 correct 11 R 0.44 P 0.22  | not sharing a glossary term 27
+== PPR without synonym edges
+  top-3/new chunk: candidates 15 correct 1 R 0.04 P 0.07  | not sharing a glossary term 13
+  top-5/new chunk: candidates 25 correct 2 R 0.08 P 0.08  | not sharing a glossary term 21
+  top-10/new chunk: candidates 50 correct 7 R 0.28 P 0.14  | not sharing a glossary term 41
+== dense chunk cosine (bge-m3 cache)
+  top-3/new chunk: candidates 15 correct 2 R 0.08 P 0.13  | not sharing a glossary term 10
+  top-5/new chunk: candidates 25 correct 3 R 0.12 P 0.12  | not sharing a glossary term 17
+  top-10/new chunk: candidates 50 correct 5 R 0.20 P 0.10  | not sharing a glossary term 35
+
+== top-5 PPR candidates per new chunk that share no glossary term (review-log chunk items)
+  doc-parsing-chunking#00: ['concept-extraction-papers#29']
+  doc-parsing-chunking#01: ['concept-extraction-papers#32', 'concept-extraction-papers#29', 'concept-extraction-papers#14']
+  doc-parsing-chunking#02: ['concept-extraction-papers#14', 'concept-extraction-papers#05']
+  doc-parsing-chunking#03: ['concept-extraction-papers#41', 'concept-extraction-papers#32', 'concept-extraction-papers#29', 'concept-extraction-papers#34', 'concept-extraction-papers#39']
+  doc-parsing-chunking#04: ['concept-extraction-papers#41', 'concept-extraction-papers#32', 'concept-extraction-papers#29', 'concept-extraction-papers#34', 'concept-extraction-papers#14']
+== reachability: old chunks with PPR score > 1e-9 per new chunk, and gold among them
+  with synonyms doc-parsing-chunking#00: seeds 20 reachable old 39 gold reachable 10/11
+  with synonyms doc-parsing-chunking#01: seeds 22 reachable old 2 gold reachable 0/11
+  with synonyms doc-parsing-chunking#02: seeds 20 reachable old 37 gold reachable 2/3
+  with synonyms doc-parsing-chunking#03: seeds 20 reachable old 21 gold reachable 0/0
+  with synonyms doc-parsing-chunking#04: seeds 7 reachable old 3 gold reachable 0/0
+  with synonyms total reachable pairs 102, gold reachable 12/25
+  no synonyms doc-parsing-chunking#00: seeds 20 reachable old 38 gold reachable 10/11
+  no synonyms doc-parsing-chunking#01: seeds 22 reachable old 0 gold reachable 0/11
+  no synonyms doc-parsing-chunking#02: seeds 20 reachable old 0 gold reachable 0/3
+  no synonyms doc-parsing-chunking#03: seeds 20 reachable old 0 gold reachable 0/0
+  no synonyms doc-parsing-chunking#04: seeds 7 reachable old 0 gold reachable 0/0
+  no synonyms total reachable pairs 38, gold reachable 10/25
+== new-doc phrases that also appear in old chunks: ['세션']
+== does any new-doc phrase contain 'autoschemakg': []

@@ -1,0 +1,24 @@
+You are the curator of an internal glossary at the network verification department of a Korean telecom equipment company. In this department, products, vendors, operators, test events and organizations are written only with in-house names. You now write the "pinned facts" of a few glossary cards. Pinned facts are authoritative statements that a reader can trust over any document.
+
+In-house name table for all cards (id | in-house name | public name):
+<names>
+<<NAMES>>
+</names>
+
+For each card below you get its glossary entry, the documents that mention it, and claims (sentences) taken from those documents. Write 3 to 6 facts per card, in Korean:
+1. The first fact is the public identity: what the thing is, using its public name (for example "Open5GS 기반의 오픈소스 5G 코어 구현이다"). Set "kind": "identity".
+2. Then 2 to 4 facts that are true in the given claims: who makes or runs it, which events or tests it took part in, which other cards it runs with or depends on, which components or versions it has, which problems it is known for. Each such fact must be supported by the listed claims; copy their claim ids into "source_claims". Set "kind": "corpus". Prefer facts that link this card to another card in the table, and facts that a question could use to point to this card without naming it.
+3. Optionally at most 1 fact that only people inside the department know (for example which lab bench or internal project uses it). It is invented, so set "kind": "invented" and "invented": true and leave "source_claims" empty.
+
+Writing rules:
+- Refer to this card and to other cards by their in-house names, never by public names, except in the identity fact. Put the ids of the other cards a fact mentions into "related_hubs".
+- One fact is one sentence of at most 120 characters, stating one checkable thing. Do not hedge.
+- Do not state anything the claims do not support, except in the one invented fact.
+
+Cards:
+<cards>
+<<CARDS>>
+</cards>
+
+Reply with only JSON:
+{"cards": [{"id": "<card id>", "facts": [{"text": "...", "kind": "identity|corpus|invented", "invented": false, "source_claims": ["<claim id>"], "related_hubs": ["<card id>"]}]}]}

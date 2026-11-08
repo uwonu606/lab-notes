@@ -1,0 +1,700 @@
+{
+ "report": "# 일부러 넓게 잇고 나중에 지우기 쉬운 구조: 조사 종합\n\n## 표시 규칙\n\n- `[2차 검증: 맞음]`: 수집한 에이전트와 다른 에이전트가 원문을 다시 열었다. 그 에이전트는 인용과 설명을 맞다고 판정했다.\n- `[2차 검증: 일부]`: 다른 에이전트가 원문을 다시 열었다. 인용은 맞지만 설명의 일부가 바로잡혔다. 바로잡힌 내용은 \"옮겨지지 않는 것\"에 반영했다.\n- `[critic만]`: 빠진 것을 찾는 critic 에이전트만 열어 본 출처다. 다른 에이전트가 다시 확인하지 않았다.\n- kfchou lint-mechanical은 반박됐다. 그래서 쓰지 않았다.\n\n---\n\n## 1. 여섯 가지 패턴\n\n### 1.1 링크를 근거가 붙은 파생 데이터로 본다\n\n**메커니즘.** 파생 결과마다 그것을 만든 근거를 적어 둔다. 근거 수를 세어 두기도 한다. 근거를 철회하면 그 근거에 기댄 결과만 빠진다. 근거가 하나도 남지 않은 결과는 사라진다. 다른 근거가 남은 결과는 그대로 산다.\n\n**대표 출처**\n- Counting algorithm (Gupta, Mumick, Subrahmanian, SIGMOD 1993). 논문. http://www.cs.columbia.edu/~gravano/Qual/Papers/13%20-%20Maintaining%20Views%20Incrementally.pdf\n  \"The counting algorithm works by storing the number of alternative derivations of each tuple t in the materialized view.\" `[2차 검증: 일부]`\n- ATMS (de Kleer, Artificial Intelligence 1986). 논문. https://dekleer.org/Publications/An%20Assumption-Based%20TMS.pdf\n  \"context switching is free, and most backtracking (and all retraction) is avoided.\" `[2차 검증: 맞음]`\n- Provenance Guided Rollback Suggestions (Zhao 외, arXiv 2501.09225). 논문. https://arxiv.org/abs/2501.09225\n  \"This paper introduces an incremental debugging technique for Datalog, which determines the failing changes for a rollback in an incremental setup.\" `[2차 검증: 맞음]`\n- Event Sourcing (Martin Fowler). 블로그. https://martinfowler.com/eaaDev/EventSourcing.html\n  \"We can discard the application state completely and rebuild it by re-running the events from the event log on an empty application.\" `[2차 검증: 맞음]`\n- Provenance semirings (Green, Karvounarakis, Tannen, PODS 2007). 논문. https://web.cs.ucdavis.edu/~green/papers/pods07.pdf\n  \"It seems that we need to know not just which input tuples contribute but also how they contribute.\" `[2차 검증: 일부]`\n- LightRAG adelete_by_doc_id. GitHub. https://github.com/HKUDS/LightRAG/blob/main/lightrag/lightrag.py\n  \"If entities or relationships are partially affected, they will be rebuilded using LLM cached from remaining documents.\" `[2차 검증: 일부]`\n- 반면교사 1: Microsoft GraphRAG issue #2590. GitHub issue. https://github.com/microsoft/graphrag/issues/2590\n  \"the incremental update computes which documents were removed from the input, but never uses that information.\" `[2차 검증: 맞음]`\n- 반면교사 2: A-MEM memory_system.py. GitHub. https://github.com/agiresearch/A-mem/blob/main/agentic_memory/memory_system.py\n  `note.links.extend(suggest_connections)` `[2차 검증: 일부]`\n- 같은 축의 출처: DRed, Hu-Motik-Horrocks AAAI 2018, JTMS(Doyle 1979), ULDBs/Trio, Soufflé provenance, differential dataflow, ER with Evolving Rules. 모두 `[2차 검증: 일부]` 또는 `[2차 검증: 맞음]`이다.\n\n**우리 설정에 옮기면**\n- 링크 (A, B)의 근거는 \"둘 다 언급한 entry\"다. 정확히는 매칭된 (entry, alias)다.\n- [확인] 우리 링크 규칙은 재귀 없는 join 하나다. 원문은 counting을 비재귀 뷰용으로 제시한다. 그래서 Counting이 그대로 맞는다.\n- 공유 entry 수가 곧 count다. alias 하나를 빼면 count가 줄어든다. count가 0이 된 링크만 사라진다.\n- [추정] ATMS를 옮기면 LLM 행동 하나가 가정 하나가 된다. 그러면 원래 용어집과 LLM이 키운 용어집의 비교가 context 전환이 된다. 근거는 ATMS 원문 1개다. 이 적용은 우리 쪽 해석이다.\n- [추정] Rollback 논문의 구조는 우리 문제와 모양이 같다. 원문은 입력 변경, 원치 않는 결과, 원인 변경 rollback의 순서다. 우리는 용어집 행동, 틀린 링크, 행동 철회의 순서다. 근거는 이 논문 1개다.\n\n**옮겨지지 않는 것**\n- 이 패턴은 무엇이 틀렸는지 알 때 지우는 법을 준다. 무엇이 틀렸는지 찾아 주지는 않는다.\n- Rollback 논문에서도 결함 집합은 사용자가 준다.\n- JTMS 본문은 열어 보지 못했다. 그래서 IN/OUT 같은 세부는 근거로 쓸 수 없다.\n- differential dataflow나 Soufflé 같은 엔진은 수천 노트 규모에서는 과하다.\n\n### 1.2 후보 층과 확정 층을 나눈다\n\n**메커니즘.** 기계가 만든 링크는 후보 층에 둔다. 확정 층과 섞지 않는다. 확인을 통과한 것만 확정 층으로 올라간다. 후보는 따로 저장되거나, 화면을 그릴 때만 계산된다.\n\n**대표 출처**\n- NELL (Carlson 외, AAAI 2010). 논문. https://www.cs.cmu.edu/~acarlson/papers/carlson-aaai10.pdf\n  \"Category and relation instances added to the KB are partitioned into candidate facts and beliefs.\" `[2차 검증: 일부]`\n- Knowledge Graph Identification with PSL (Pujara 외, ISWC 2013). 논문. https://www.jaypujara.org/pubs/2013/pujara:iswc13/pujara_iswc13.pdf\n  \"determining which candidate facts should be included into a knowledge graph as knowledge graph identification.\" `[2차 검증: 맞음]`\n- Wikimedia \"Add a link\" (mwaddlink). product docs와 Phabricator. https://wikitech.wikimedia.org/wiki/Add_Link\n  \"A MySQL table per wiki is used for caching the actual link recommendations\" `[2차 검증: 맞음]`\n- Obsidian Virtual Linker. GitHub. https://github.com/vschroeter/obsidian-virtual-linker\n  \"The auto generated links are post-processed, so they neither change your note text to hard-coded links enclosed in brackets not appear in the graph view or reference counting.\" `[2차 검증: 맞음]`\n- mindbase links 표의 origin과 confidence 열. 로컬에 클론한 GitHub repo. llm-wiki-implementations/lab/repos/frankchu91_mindbase-llm-wiki/packages/core/src/graph/index/wiki-index.ts\n  \"Origin is set to 'llm' to distinguish from markdown-derived edges.\" `[2차 검증: 일부]`\n- Wikidata Mix'n'match. product docs. https://meta.wikimedia.org/wiki/Mix'n'match/Manual\n  \"the system has guessed one or more possible match for the entry in Wikidata, but a person needs to verify or reject it.\" `[critic만]`\n- 같은 축의 출처: inkeep links suggest, Obsidian unlinked mentions, Smart Connections. 모두 `[2차 검증: 일부]` 또는 `[2차 검증: 맞음]`이다.\n- 반쪽 사례: Ar9av cross-linker. 이 도구도 INFERRED 등급을 매긴다. 그러나 등급은 보고서에만 남는다. 파일에 쓴 링크에는 표시가 없다. 그래서 나중에 골라낼 수 없다. `[2차 검증: 일부]`\n\n**우리 설정에 옮기면**\n- 지금의 co-mention 링크 전체를 후보 층으로 본다. PSL 논문의 용어로는 extraction graph다.\n- 조회할 때는 확정 층만 쓴다. 확정 층은 점수 문턱이나 LLM 판정을 통과한 부분집합이다.\n- 상태는 세 단계로 둘 수 있다. 후보, 확정, 거절이다.\n- 링크에 origin을 단다. 예를 들어 \"원래 용어집에서 왔다\"와 \"LLM이 키운 용어집에서 왔다\"를 구분한다.\n\n**옮겨지지 않는 것**\n- Wikimedia, Virtual Linker, Mix'n'match, Smart Connections는 모두 사람이 승격한다. 우리는 사람 검토가 없다. 그 자리를 점수 문턱(#1.3)이나 LLM 검증기가 맡아야 한다.\n- LLM 검증기를 쓴다면 KGValidator의 출력 형식(is_valid와 reason)을 빌릴 수 있다. KGValidator는 `[2차 검증: 일부]`다.\n- NELL에는 강등 경로가 없다. 원문은 \"once a candidate fact is promoted as a belief, it is never demoted.\"라고 쓴다.\n- [확인] 우리에게 NELL의 KB에 해당하는 것은 링크가 아니다. LLM이 키우는 용어집이다. 용어집에 강등 경로가 없으면 오류가 거기서 쌓인다.\n\n### 1.3 넘치게 만들고, 점수를 붙이고, 자르기는 읽을 때 한다\n\n**메커니즘.** 후보는 recall 위주의 싼 규칙으로 넉넉히 만든다. 후보마다 점수를 붙인다. 문턱은 저장할 때가 아니라 읽을 때 건다. 그래서 문턱을 바꿔도 아무것도 지워지지 않는다.\n\n**대표 출처**\n- DeepDive (Shin 외, VLDB 2015). 논문. http://www.vldb.org/pvldb/vol8/p1310-shin.pdf\n  \"Candidate mappings are simply SQL queries with UDFs that look like low-precision but high-recall ETL scripts.\" `[2차 검증: 맞음]`\n- DBpedia Spotlight (Mendes 외 2011). 논문. https://www.dbpedia-spotlight.org/docs/spotlight.pdf\n  \"we decided to employ minimal pre-filtering and postpone the selection to a user-configured post-disambiguation configuration stage.\" `[2차 검증: 맞음]`\n- Knowledge Vault (Dong 외, KDD 2014). 논문. https://www.cs.ubc.ca/~murphyk/papers/kv-kdd14.pdf\n  \"KV has 1.6B triples, of which 324M have a confidence of 0.7 or higher, and 271M have a confidence of 0.9 or higher.\" `[2차 검증: 맞음]`\n- Neo4j GDS Node Similarity. product docs. https://neo4j.com/docs/graph-data-science/current/algorithms/node-similarity/\n  \"Lower limit for the similarity score to be present in the result.\" `[2차 검증: 맞음]`\n- Cognee cross_connect_entities. GitHub. https://github.com/topoteretes/cognee/blob/main/cognee/tasks/memify/cross_connect_entities.py\n  \"# Inferred edges start with a low feedback weight so they can be told apart from # extraction-time relationships and pruned first if they turn out to be noise.\" `[2차 검증: 맞음]`\n- Splink predict와 clustering. product docs. https://moj-analytical-services.github.io/splink/demos/tutorials/05_Predicting_results.html\n  \"which will drop any row where the predicted score is below the threshold.\" `[2차 검증: 맞음]`\n- Alignment API cut과 harden. product docs. https://moex.gitlabpages.inria.fr/alignapi/api.html\n  \"all correspondences whose strength is strictly greater than the argument is converted to the maximum confidence, the others being set to the minimum\" `[critic만]`\n- OKF 명세. 로컬에 클론한 GitHub repo. llm-wiki-implementations/lab/repos/GoogleCloudPlatform_knowledge-catalog/okf/SPEC.md\n  \"It does not store a credibility score: a score is subjective, unportable across consumers, and goes stale.\" `[2차 검증: 일부]`\n- 같은 축의 출처: Retrieve & Re-Rank, spaCy EntityLinker threshold. 둘 다 `[2차 검증: 맞음]`이다.\n\n**우리 설정에 옮기면**\n- [확인] 구조가 가장 가까운 것은 DeepDive다. 용어집 co-mention 규칙이 \"low-precision but high-recall\" candidate mapping 자리에 그대로 들어간다.\n- [추정] 링크 점수는 저장하지 않는다. 재계산할 때 신호에서 매번 계산한다. 근거는 OKF 명세 1개와, 우리가 링크를 이미 재계산한다는 점이다.\n- 신호의 예는 entry의 document frequency, alias의 출처, 공유 entry 수다.\n- 조회 API는 Alignment API의 `cut(t)` 모양으로 둔다. t는 precision과 recall 사이를 조절하는 다이얼이 된다.\n\n**옮겨지지 않는 것**\n- DeepDive와 Knowledge Vault의 calibration은 라벨로 학습해서 얻는다. 라벨이 없는 우리는 \"p=0.9면 90%가 맞다\"는 성질을 기대할 수 없다.\n- 점수는 손으로 만들어야 한다.\n- Cognee의 낮은 가중치는 기본 설정에서 아무 효과가 없다. 검색에 섞는 비율 default_feedback_influence가 기본으로 0.0이다. inferred 엣지를 지우는 코드도 저장소에 없다.\n- Splink는 predict 단계에서 이미 문턱 아래 행을 버린다. 그래서 진짜 \"읽을 때 자르기\"는 아니다.\n\n### 1.4 흔한 entry를 entry 단위로 누른다\n\n**메커니즘.** 거의 모든 문서에 나오는 key는 쓸모없는 쌍을 대량으로 만든다. 이런 key를 통째로 빼거나 등장 빈도로 가중치를 깎는다. key 단위로 한 번만 정하면 그 key가 만든 링크가 모두 따라 움직인다.\n\n**대표 출처**\n- Meta-blocking과 Block Purging (Papadakis 외, TKDE13; Gagliardelli 외, arXiv 2204.08801). 논문. https://arxiv.org/html/2204.08801\n  \"Block Purging ... discards all the blocks that contain more than half of the entity profiles in the collection in a parameter-free way.\" `[2차 검증: 맞음]`\n- Adamic-Adar index (NetworkX). product docs. https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.link_prediction.adamic_adar_index.html\n  \"∑_{w ∈ Γ(u) ∩ Γ(v)} 1/log|Γ(w)|\" `[2차 검증: 일부]`\n- Mem0 OSS entity boost. GitHub. https://github.com/mem0ai/mem0/blob/main/mem0/memory/main.py\n  `memory_count_weight = 1.0 / (1.0 + 0.001 * ((num_linked - 1) ** 2))` `[2차 검증: 일부]`\n- Ar9av session_index의 DF 상한. 로컬에 클론한 GitHub repo. llm-wiki-implementations/lab/repos/Ar9av_obsidian-wiki/obsidian_wiki/session_index.py\n  \"Any term appearing in more than MAX_DF_RATIO of all sessions is deleted from the vocabulary outright.\" `[2차 검증: 일부]`\n- Elasticsearch More Like This. product docs. https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-mlt-query.html\n  \"The maximum document frequency above which the terms will be ignored from the input document.\" `[2차 검증: 일부]`\n- Milne & Witten (CIKM 2008). 논문. https://complexevents.com/wp-content/uploads/2008/12/cikm08-learningtolinkwithwikipedia.pdf\n  \"is only intended to discard nonsense phrases and stop words.\" `[2차 검증: 맞음]`\n- DBpedia Spotlight support. 논문. https://www.dbpedia-spotlight.org/docs/spotlight.pdf\n  \"With the support parameter, users can specify the minimum number of inlinks a DBpedia resource has to have in order to be annotated.\" `[2차 검증: 맞음]`\n- mindbase god_node_disambiguation. 로컬에 클론한 GitHub repo. llm-wiki-implementations/lab/repos/frankchu91_mindbase-llm-wiki 안의 suggestions.ts:92\n  \"${g.title} is referenced ${g.inboundCount} times, but ${ambiguousCount} of those edges are uncertain — clarify what this concept means.\" `[2차 검증: 일부]`\n- Snorkel data programming (Ratner 외, VLDB 2017). 논문. https://arxiv.org/abs/1711.10160\n  \"sources will overlap and conflict, and to resolve their conflicts we need to estimate their accuracies and correlation structure, without access to ground truth.\" `[critic만]`\n- Raad 외, Detecting Erroneous Identity Links (ISWC 2018). 논문. https://research.vu.nl/ws/files/75391299/Raad2018_Chapter_DetectingErroneousIdentityLink.pdf\n  \"It is subsequently used to rank identity links, allowing potentially erroneous links to be identified\" `[critic만]`\n- 같은 축의 출처: HippoRAG node specificity(1/등장 passage 수), Wikify keyphraseness, Gerlach 외 link probability, nashsu Adamic-Adar, Cognee IDF 가중 후보 선택. 모두 `[2차 검증: 일부]` 또는 `[2차 검증: 맞음]`이다.\n\n**우리 설정에 옮기면**\n- [확인] 구조가 같다. entry는 block이다. 같은 entry를 언급한 두 chunk는 blocking graph의 edge다.\n- 링크 점수는 공유 entry마다 1/log(df)를 더한 값으로 둘 수 있다. df는 그 entry를 언급한 chunk 수다. 이것은 chunk-entry bipartite graph에 Adamic-Adar를 건 것이다.\n- [확인] 계산 예를 보면 차이가 크다. 300개 chunk에 나오는 entry는 0.175를 보탠다. 2개 chunk에 나오는 entry는 1.44를 보탠다.\n- 더 거친 방식도 있다. 절반이 넘는 chunk에 나오는 entry를 링크 계산에서 뺀다. 원문은 Block Purging이고 기준은 50%다. Ar9av는 45%를 쓴다.\n- 이 방식은 entry를 용어집에서 지우지 않는다. 링크 계산에서만 뺀다. Elasticsearch의 max_doc_freq도 같은 모양이다.\n- mindbase 규칙도 옮길 수 있다. 불확실한 링크가 한 entry에 몰리면 그 entry를 의심하라고 알린다.\n- [추정] Snorkel을 옮기면 entry 하나가 labeling function 하나가 된다. 그러면 entry마다 coverage와 conflict를 계산할 수 있다. 근거는 튜토리얼의 keyword LF 1개다.\n\n**옮겨지지 않는 것**\n- link probability와 keyphraseness는 사람이 단 링크 통계가 필요하다. Milne & Witten, Gerlach, Wikify가 모두 그렇다. 우리는 document frequency로 대신해야 한다. 그 대체가 통하는지는 어느 출처도 다루지 않는다.\n- 차수 기반 가중치에는 반대 방향의 함정이 있다. 드문 entry에 잘못 붙은 alias는 오히려 높은 점수를 받는다. 그래서 잘못된 alias가 만든 오류는 이 패턴으로 잡히지 않는다.\n- Snorkel의 LabelModel은 LF끼리 조건부 독립에 가깝다고 가정한다. 서로 강하게 상관된 alias에서는 이 가정이 깨질 수 있다.\n- Raad 방식은 그대로 옮기기 어렵다. 우리 링크는 entry마다 clique를 만든다. generic entry의 clique는 밀집 community가 된다. 그러면 오히려 error degree가 낮게 나올 수 있다.\n\n### 1.5 지우지 말고 무효 표식과 거절 기록을 남긴다\n\n**메커니즘.** 틀린 항목을 물리적으로 지우지 않는다. 상태를 낮추고 이유와 시각을 단다. 기본 조회는 낮춘 항목을 빼고 읽는다. 거절 기록은 같은 것이 다시 들어오는 것을 막는 근거가 된다.\n\n**대표 출처**\n- Wikidata statement rank. product docs. https://www.wikidata.org/wiki/Help:Ranking\n  \"Marking erroneous statements as deprecated instead of simply deleting such statements has three benefits: it allows other users to know not to re-add the value to the item\" `[2차 검증: 맞음]` (두 갈래가 따로 수집했다)\n- Wikimedia \"Add a link\"의 거절 처리 (T429417). Phabricator. https://phabricator.wikimedia.org/T429417\n  \"We the Growth team simply 'swallow' (and keep to ourselves) suggestions that were rejected before.\" `[2차 검증: 맞음]`\n- Graphiti/Zep edges. GitHub. https://github.com/getzep/graphiti/blob/main/graphiti_core/edges.py\n  `expired_at ... description='datetime of when the node was invalidated'` `[2차 검증: 일부]`\n- Mem0 논문의 Mem0g. 논문. https://arxiv.org/html/2504.19413v1\n  \"marking them as invalid rather than physically removing them to enable temporal reasoning.\" `[2차 검증: 일부]`\n- Obsidian Smart Connections. GitHub. https://github.com/brianpetro/obsidian-smart-connections\n  \"Right click a result to hide it from the list\" `[2차 검증: 맞음]`\n- openwiki wiki-link-validator. 로컬에 클론한 GitHub repo. llm-wiki-implementations/lab/repos/langchain-ai_openwiki/src/agent/wiki-link-validator.ts\n  \"Existing stamps are cleared first, so a fixed link leaves no residual comment.\" `[2차 검증: 일부]`\n- Nanopublication retraction. product docs. https://nanopub.readthedocs.io/en/latest/publishing/retraction.html\n  \"A nanopublication is persistent, you can never edit nor delete it. You can however retract a nanopublication.\" `[critic만]`\n- FamilySearch record hints. product docs. https://www.familysearch.org/en/help/helpcenter/article/what-do-i-do-with-record-hints-in-family-tree-that-arent-a-match\n  \"Dismissing prevents others from attaching the record by mistake.\" `[critic만]`\n- MusicBrainz voting. product docs. https://musicbrainz.org/doc/Introduction_to_Voting\n  \"Some edits (most removals and merges) are considered \\\"destructive\\\" (meaning they're either impossible or very hard to revert).\" `[critic만]`\n- 같은 축의 출처: TerminusDB branch와 reset `[critic만]`, atomicstrata의 orphaned 제외 `[2차 검증: 일부]`.\n\n**우리 설정에 옮기면**\n- 표식을 둘 자리는 두 곳이다.\n- 첫째는 용어집이다. entry와 alias에 상태를 단다. 예를 들면 active, deprecated, 이유, 그것을 만든 LLM 결정 id다. 재계산은 deprecated를 건너뛴다. LLM은 다음 성장 단계에서 deprecated 목록을 보고 같은 alias를 다시 넣지 않는다.\n- [확인] 둘째 근거는 Wikidata 원문이다. 원문이 \"다시 추가하지 않게 알린다\"를 첫 번째 이점으로 든다.\n- 둘째는 링크 단위의 거절 목록이다. 형태는 (chunk A, chunk B, entry)다. 재계산 결과 위에 이 목록을 필터로 건다. Wikimedia와 FamilySearch가 같은 모양이다.\n- [추정] alias 결정은 두 이름을 병합하는 것과 같다. MusicBrainz는 병합을 되돌리기 어려운 작업으로 다룬다. 그래서 alias는 표식으로 끌 수 있게 두는 편이 맞다. 근거는 MusicBrainz 사례 1개다.\n- openwiki에서 가져올 원칙도 있다. 의심 표시를 저장된 상태로 두지 않고, run마다 다시 계산하는 값으로 둔다.\n\n**옮겨지지 않는 것**\n- 누가 deprecated로 바꿀지가 비어 있다. Wikidata, Wikimedia, FamilySearch, Smart Connections는 모두 사람이 누른다.\n- Graphiti와 Mem0g의 무효화는 LLM이 모순을 볼 때만 일어난다. generic entry가 만든 링크는 무엇과도 모순되지 않는다. 그래서 이 방식은 그런 링크에 반응하지 않는다.\n- Graphiti에는 기본 검색이 무효화된 엣지를 빼지 않는 문제도 있다. issue #1728은 반환된 fact의 30%가 invalid_at을 달고 있었다고 적는다.\n- 같은 issue는 표본 4건 중 3건이 오판이었다고 적는다. 잘못 무효화된 fact를 되살리는 일은 별도 작업으로 남아 있다. 표식 자체도 틀릴 수 있다는 뜻이다.\n- Smart Connections의 숨김이 다시 인덱싱한 뒤에도 남는지는 README에 없다.\n\n### 1.6 쓰이면 강화하고 안 쓰이면 감쇠한다\n\n**메커니즘.** 처음에는 링크나 항목을 약한 가중치로 둔다. 검색에서 함께 쓰이면 가중치가 오른다. 쓰이지 않으면 시간에 따라 내려간다. 지우는 것은 아주 약해진 경우뿐이다.\n\n**대표 출처**\n- MemoryOS (arXiv 2506.06326). 논문. https://arxiv.org/html/2506.06326v1\n  \"When the length of segments exceeds the maximum capacity, segments with the lowest heat are evicted.\" `[2차 검증: 일부]`\n  같은 검증에서 Generative Agents(arXiv 2304.03442)의 \"Our decay factor is 0.995\"도 확인했다.\n- rohitg00 LLM Wiki v2 gist. 로컬에 저장한 gist. llm-wiki-implementations/lab/sources/rohitg00-llm-wiki-v2-gist/llm-wiki.md\n  \"Not deleted, but deprioritized.\" `[2차 검증: 일부]`\n- HeLa-Mem (arXiv 2604.16839). 논문. https://arxiv.org/html/2604.16839\n  \"this strict compound criterion ensures that the system selectively removes noise while preserving strong, albeit older, associations.\" `[critic만]`\n- Learning Webs (Bollen & Heylighen). 블로그. https://pespmc1.vub.ac.be/LEARNWEB.html\n  \"The frequency rule that reinforces a link from document A to document B each time a user moves from A to B.\" `[critic만]`\n- 같은 축의 출처: Cognee의 평점 기반 feedback_weight 이동평균 `[2차 검증: 맞음]`.\n\n**우리 설정에 옮기면**\n- [추정] 검색이나 평가 질의에서 함께 쓰인 chunk 쌍의 가중치를 올릴 수 있다. 그러면 아무도 쓰지 않는 generic 링크가 상대적으로 가라앉는다. 사례는 2개다(HeLa-Mem, Learning Webs).\n\n**옮겨지지 않는 것**\n- 여섯 패턴 중 가장 덜 맞는다.\n- 모든 출처가 사용 로그를 신호로 쓴다. 우리에게는 질의 기록이 거의 없다.\n- 가중치는 상태다. 그래서 별도 저장소가 생긴다. 링크를 저장하지 않는 지금 구조와 부딪힌다.\n- HeLa-Mem 감쇠식의 표기는 원문에서 다시 확인하지 못했다.\n- Ar9av의 decay는 링크가 아니라 session 노드에 걸린다. 그래서 링크 감쇠의 근거로 쓸 수 없다.\n\n---\n\n## 2. 우리 설정에 이미 있는 것과 없는 것\n\n### 이미 있는 것\n- [확인] 링크는 용어집에서 다시 계산된다. 그래서 entry나 alias를 빼면 그것에 기댄 링크가 다음 재계산에서 빠진다. #1.1의 Counting과 DRed가 주는 효과를 이미 공짜로 얻는다.\n- [확인] LLM은 링크를 직접 저장하지 않는다. 그래서 A-MEM과 GraphRAG #2590처럼 링크가 쌓이기만 하는 문제를 피한다.\n- [확인] word-boundary 매칭은 recall 1.00이다. #1.3의 high-recall candidate mapping 자리를 이미 채운다. spaCy로 보면 get_candidates 단계에 해당한다. 우리는 거기서 멈춘다.\n\n### 없는 것\n\n| 빠진 것 | 해당 패턴 | 없어서 생기는 일 |\n|---|---|---|\n| 링크마다 붙는 상태(후보, 확정, 거절) | #1.2, #1.5 | 틀린 링크 하나만 끌 방법이 없다. 끄려면 entry를 지워야 하고, 그러면 맞는 링크도 함께 사라진다. |\n| entry마다 붙는 가중치(df 등) | #1.4, #1.3 | PDF, arXiv, \"user\"가 희귀 entry와 같은 무게로 링크를 만든다. |\n| 출처 기록: 링크→(entry, alias), entry와 alias→LLM 결정·문서·시각 | #1.1 | 틀린 링크가 어느 LLM 결정에서 왔는지 거꾸로 찾을 수 없다. |\n| 용어집 쪽 표식(deprecated와 이유) | #1.5 | LLM이 버린 alias를 다음 성장 단계에서 다시 넣을 수 있다. 이 일이 실제로 일어나는지는 아래 \"모르는 것\"에 적었다. |\n| 사용 신호 | #1.6 | 강화와 감쇠를 할 수 없다. |\n\n- [확인] NELL에서 얻을 교훈은 링크보다 용어집에 걸린다. NELL에서 오류가 쌓이는 곳은 강등 경로가 없는 KB다. 우리 구조에서 그 자리는 LLM이 혼자 키우는 용어집이다. 측정값도 같은 방향이다. 성장 뒤 precision은 0.44에서 0.27, 0.20으로 내려갔다.\n- 모르는 것: 지금 성장 로그에 discard 결정이 이유와 함께 남는지 나는 모른다. 성장 파이프라인의 출력 파일을 보면 알 수 있다.\n\n---\n\n## 3. 다음에 돌릴 가장 싼 실험 두 개\n\n### 실험 1: entry별 df 가중치를 읽을 때 계산한다 (#1.4와 #1.3)\n- 점수는 score(A, B) = Σ 1/log(df_e)로 둔다. 합은 A와 B가 공유한 entry e 전부에 대해 구한다.\n- 비교군은 둘이다. 하나는 절반이 넘는 chunk에 나오는 entry를 빼는 Block Purging이다. 다른 하나는 45%를 기준으로 하는 Ar9av의 상한이다.\n- 문턱을 바꿔 가며 잰다.\n- 저장 구조는 바뀌지 않는다. LLM 호출도 없다. 재계산 함수 하나만 바꾼다.\n- 지표 1: 세 용어집(원래 용어집, 성장 두 단계)마다 precision-recall 곡선을 그린다. recall을 0.9 이상으로 유지할 때의 precision을 지금 값과 비교한다. 지금 값은 recall 1.00에서 0.44, 0.27, 0.20이다.\n- 지표 2: 남은 오류를 원인별로 나눈다. 원인은 generic entry와 잘못된 alias 두 가지다.\n- [추정] 남은 오류는 대부분 잘못된 alias일 것이다. 사례 2개에서 끌어냈다. Adamic-Adar 항목이 드문 entry의 잘못된 alias가 높은 점수를 받는다고 지적한다. Meta-blocking 항목도 잘못된 alias의 block은 purging으로 잡히지 않는다고 지적한다. 이 비율이 크면 실험 2가 필요하다.\n\n### 실험 2: 링크에 출처를 달고, LLM 결정 단위로 철회 효과를 잰다 (#1.1과 #1.5)\n- 재계산할 때 링크마다 (entry, alias, 그 alias를 만든 LLM 결정 id)를 붙인다.\n- 정답 링크로 결정마다 틀린 링크 수를 센다.\n- 지표 1: 오류가 얼마나 몰려 있는지 잰다. 예를 들어 틀린 링크 중 몇 %가 가장 나쁜 결정 10%에서 오는지 본다.\n- 지표 2: 가장 나쁜 결정 k개를 철회했을 때 precision이 어떻게 오르는지 본다. k는 1, 5, 10으로 둔다.\n- 이 실험은 정답 라벨을 쓴다. 그래서 결과는 상한선이다. 자동 탐지기를 만들기 전에 결정 단위 철회가 효과가 있을지를 알려 준다.\n- 오류가 몰려 있으면 #1.5를 들일 근거가 선다. 용어집에 deprecated 표식을 두고 성장 단계에 tombstone을 넘기는 구조다.\n- 그때 함께 잴 것은 재추가 비율이다. tombstone이 있을 때와 없을 때 LLM이 버린 alias를 다시 넣는 비율을 비교한다.",
+ "confirmed": [
+  {
+   "name": "DeepDive: candidate mapping과 incremental KBC (Shin et al., VLDB 2015)",
+   "url": "http://www.vldb.org/pvldb/vol8/p1310-shin.pdf",
+   "verdict": "confirmed",
+   "checked_quote": "Candidate mappings are simply SQL queries with UDFs that look like low-precision but high-recall ETL scripts. Such rules must be high recall: if the union of candidate mappings misses a fact, DeepDive has no chance to extract it. ... it obtains a marginal probability p for each candidate fact. To produce the final KB, the user often selects facts in which we are highly confident, e.g., p > 0.95. Typically, the user needs to inspect errors and repeat, a process that we call error analysis. / DeepDive also produces marginal probabilities that are calibrated: if one examined all facts with probability 0.9, we would expect that approximately 90% of these facts would be correct. To calibrate these probabilities, DeepDive estimates (i.e., learns) parameters of the statistical model from data.",
+   "correction": "인용은 원문과 같다(PDF 추출에서 띄어쓰기만 붙어 나옴). 두 가지를 보탠다. 첫째, '후보 자체는 지우지 않는다'는 논문이 명시한 문장이 아니다. threshold로 고른다는 서술에서 끌어낸 해석이다. 둘째, calibration은 공짜가 아니다. 논문은 모델 파라미터를 데이터에서 학습해서 calibration을 얻는다고 적는다. 라벨 없는 우리 설정에서는 'p=0.9면 90% 맞음'이라는 성질을 그대로 기대할 수 없다. incremental 재계산(delta rules, 22배 빠름)은 확인했다.",
+   "mechanism_summary": "사람이 쓴 recall 위주 SQL 규칙(candidate mapping)이 후보를 넓게 만든다. factor graph 추론이 후보마다 marginal probability를 매기고, 사용자는 p>0.95 같은 threshold로 최종 KB를 고른다. 틀린 후보는 error analysis로 찾아 규칙·feature를 고치고, 바뀐 부분만 incremental하게 다시 계산한다.",
+   "fit": "[확인] 구조는 가장 가깝다. 용어집 co-mention 규칙이 'low-precision but high-recall' candidate mapping 자리에 그대로 들어간다. 단 점수 쪽은 학습(distant supervision)에 기대므로, 우리는 손으로 만든 점수로 바꿔야 하고 calibration은 포기해야 한다.",
+   "angle": "kg-academic"
+  },
+  {
+   "name": "NELL: candidate facts와 promoted beliefs, Knowledge Integrator (Carlson et al., AAAI 2010)",
+   "url": "https://www.cs.cmu.edu/~acarlson/papers/carlson-aaai10.pdf",
+   "verdict": "partly",
+   "checked_quote": "Category and relation instances added to the KB are partitioned into candidate facts and beliefs. ... Components supply a probability for each proposed candidate and a summary of the source evidence supporting it. / Candidate facts that have high confidence from a single source (those with posterior > 0.9) are promoted, and lower-confidence candidates are promoted if they have been proposed by multiple sources. / In our current implementation, once a candidate fact is promoted as a belief, it is never demoted. / There is a downward trend in estimated precision, going from 90% to 71% to 57%.",
+   "correction": "인용, 1-0.5^c 공식, 0.9 승격 기준, 90/71/57% 수치는 모두 원문에 있다. 과장된 부분은 인과다. 논문은 precision 하락을 '강등 경로가 없어서'라고 말하지 않는다. 논문은 하락 원인을 bootstrap 학습의 labeling error 누적(semantic drift)으로 보고, 대책으로 사람 개입(하루 10~15분, active learning)을 든다. 또 표 2의 precision은 그 구간에 새로 승격된 belief만 잰 값이다. 누적 KB의 precision이 아니다. '두 층이 같은 표현을 쓴다'와 'source justification'이라는 표현은 원문에 없다. 원문은 'summary of the source evidence'다. 그리고 NELL 자체에는 강등·제거 장치가 없으므로 '지우기 쉬운 구조'의 사례로는 반쪽이다.",
+   "mechanism_summary": "여러 subsystem이 후보 사실을 확률과 근거 요약과 함께 낸다. Knowledge Integrator가 단일 출처 posterior>0.9이거나 여러 출처가 지지하는 후보를 belief로 승격하고, mutual exclusion·type check로 막는다. 승격된 belief는 강등되지 않는다.",
+   "fit": "[확인] candidate/belief 두 층과 '독립 출처 여럿이면 승격' 규칙은 옮길 수 있다. 반면 '우리는 링크를 다시 계산하므로 이 문제를 구조적으로 피한다'는 절반만 맞다. NELL의 KB에 해당하는 것은 우리 링크가 아니라 LLM이 키우는 용어집이다. 용어집에 강등 경로가 없으면 같은 누적이 거기서 생긴다.",
+   "angle": "kg-academic"
+  },
+  {
+   "name": "Knowledge Vault: 확률 기반 knowledge fusion (Dong et al., KDD 2014)",
+   "url": "https://www.cs.ubc.ca/~murphyk/papers/kv-kdd14.pdf",
+   "verdict": "confirmed",
+   "checked_quote": "In particular, KV has 1.6B triples, of which 324M have a confidence of 0.7 or higher, and 271M have a confidence of 0.9 or higher. / For example, suppose an extractor returns a fact claiming that Barack Obama was born in Kenya, and suppose (for illustration purposes) that the true place of birth of Obama was not already known in Freebase. Our prior model can use related facts about Obama (such as his profession being US President) to infer that this new fact is unlikely to be true.",
+   "correction": "인용은 원문과 같다. 두 가지를 보탠다. Obama-Kenya는 실제 결과가 아니라 'for illustration purposes'라고 밝힌 가상의 예다. 그리고 '조회 때 0.9를 기준으로 confident라고 부른다'는 운영 방식은 논문이 서술하지 않는다. 논문은 확률 구간별 개수를 보고할 뿐이다. calibration은 Platt Scaling과 supervised fusion(boosted decision stumps)으로 하고, 둘 다 Freebase에서 만든 라벨에 기댄다.",
+   "mechanism_summary": "여러 extractor가 triple을 confidence와 함께 내고, Freebase에서 학습한 graph-based prior가 그럴듯함을 따로 매긴다. supervised fusion이 둘을 합쳐 calibrated probability를 낸다. 낮은 확률 triple도 저장되며, prior가 낮으면 그 triple의 확률이 내려간다.",
+   "fit": "[확인] '전부 저장하고 점수로 강등' 패턴의 대표 사례로 맞다. 독립 신호 여럿을 합쳐 링크 점수를 내는 발상은 옮길 수 있다. 학습된 fusion과 calibration은 라벨이 없어서 옮길 수 없다.",
+   "angle": "kg-academic"
+  },
+  {
+   "name": "Knowledge Graph Identification with PSL (Pujara, Miao, Getoor, Cohen, ISWC 2013)",
+   "url": "https://www.jaypujara.org/pubs/2013/pujara:iswc13/pujara_iswc13.pdf",
+   "verdict": "confirmed",
+   "checked_quote": "The extractions form an extraction graph and we refer to the task of removing noise, inferring missing information, and determining which candidate facts should be included into a knowledge graph as knowledge graph identification. / By choosing a threshold on the soft-truth values in the interpretation, we can select a high-precision set of facts to construct a knowledge graph. / NELL's knowledge base contains candidate facts involving the entities \"kyrghyzstan\", \"kyrgzstan\", \"kyrgystan\", \"kyrgyz republic\", \"kyrgyzstan\", and \"kyrgistan\"",
+   "correction": "인용, 'over 1M extractions', kyrgyzstan 변형 6개는 모두 원문에 있다. 이 논문은 후보를 직접 만들지 않는다. NELL이 만든 후보를 받아 정리한다. '후보 층은 그대로 남는다'는 논문이 명시하지 않은 해석이다. 옮기려면 ontology 제약(mutual exclusion, domain/range)이 필요하다는 점이 핵심 전제다.",
+   "mechanism_summary": "extractor가 낸 후보 전체를 extraction graph로 본다. PSL이 extraction confidence, entity resolution, ontology 제약을 한꺼번에 추론해 각 사실에 soft-truth 값을 매긴다. 그 값에 threshold를 걸어 최종 knowledge graph를 고른다.",
+   "fit": "[확인] 'extraction graph(후보 전부) 대 knowledge graph(threshold 통과분)'라는 두 층 구분은 우리 전체 co-mention 링크와 조회용 링크 구분에 그대로 맞는다. 우리 용어집에는 type 제약이 얇아서 제약 기반 가지치기는 거의 쓸 수 없다.",
+   "angle": "kg-academic"
+  },
+  {
+   "name": "ULDBs / Trio: uncertainty와 lineage를 함께 다루는 DB (Benjelloun et al., VLDB 2006)",
+   "url": "https://www.vldb.org/conf/2006/p953-benjelloun.pdf",
+   "verdict": "partly",
+   "checked_quote": "With lineage, derived relations are no longer self-contained: their uncertainty depends on uncertainty in the base data. We provide an algorithm for the new operation of extracting a database subset in the presence of interconnected uncertainty. / An alternative (i, j) of an x-tuple ti in a ULDB D is said to be extraneous if removing it from the x-relation does not change the possible instances of D.",
+   "correction": "인용은 원문과 같다. 과장된 부분은 '논문에 base를 고치거나 지울 때 derived 결과를 바꾸는 연산이 있다'는 서술이다. data-minimal과 lineage-minimal은 틀린 데이터를 지우는 연산이 아니다. possible instances를 바꾸지 않는 군더더기 alternative와 '?'를 없애는 표현 최소화다. base 수정의 전파는 논문의 주제가 아니다. update 언급은 confidence memoization이 'intervening updates'가 없을 때만 유효하다는 정도다. 그리고 이 논문은 추측성 링크를 만드는 방법을 다루지 않는다. 불확실한 데이터와 출처를 표현하는 이론이다.",
+   "mechanism_summary": "tuple의 내용 불확실성은 alternatives로, 존재 불확실성은 '?'로 표시하고 confidence도 붙일 수 있다. derived tuple은 lineage로 자기를 만든 base alternative를 가리키므로, derived 데이터의 불확실성은 base 데이터에 묶인다. 제거 절차는 따로 없고, 의미를 바꾸지 않는 군더더기를 지우는 최소화만 있다.",
+   "fit": "[확인] '링크마다 어느 entry, 어느 alias에서 나왔는지 출처를 단다'는 발상을 받쳐 주는 이론적 근거로는 쓸 만하다. 다만 alias를 지울 때 영향받는 링크를 찾는 기능은 이 논문이 제공하는 것이 아니다. link→(entry, alias) 컬럼을 우리가 직접 만들어야 한다.",
+   "angle": "kg-academic"
+  },
+  {
+   "name": "Entity Resolution with Evolving Rules (Whang & Garcia-Molina, PVLDB 2010)",
+   "url": "https://vldb.org/pvldb/vol3/R117.pdf",
+   "verdict": "confirmed",
+   "checked_quote": "In practice, an entity resolution (ER) result is not produced once, but is constantly improved based on better understandings of the data, the schema, and the logic that examines and compares records. / Because the new rule B2 is stricter than B1 (we define this term precisely later on), we can actually start the second ER from the first result {{r1, r2, r3},{r4}}. That is, we only need to check each cluster separately and see if it needs to split. / When we compute an earlier result E(Pi, B1) where say B1 = p1 ∧ p2 ∧ p3, we can also materialize results such as E(Pi, p1), E(Pi, p2), E(Pi, p1 ∧ p2), and so on.",
+   "correction": "인용, stricter 개념, conjunct별 materialization은 모두 원문에 있다. 한 가지를 보탠다. 논문의 기여는 clustering(이행적으로 묶이는 결과)에서 규칙을 바꿔도 다시 시작하지 않는 조건(RM, CF 같은 알고리즘 성질)이다. 우리 링크는 chunk 쌍 단위라서, '엄격해진 규칙은 링크를 단조롭게 줄인다'는 성질은 이 논문 없이도 자명하게 성립한다. 또 LLM이 alias나 entry를 추가하는 변화는 stricter가 아니므로 이 기법의 범위 밖이다. 점수나 provisional 표시는 없다.",
+   "mechanism_summary": "match 규칙으로 record를 cluster로 묶고, 규칙은 계속 바뀐다고 가정한다. 새 규칙이 더 엄격하면 기존 cluster마다 쪼갤지만 검사하고, 그렇지 않으면 미리 저장해 둔 규칙 조각(conjunct)별 결과에서 다시 출발한다.",
+   "fit": "[확인] '느슨하게 묶고 나중에 조이면 싸게 쪼갠다'는 전략의 정식 근거로 맞다. [추정] 우리 규모에서는 성능 이득보다 '용어집에서 빼는 변경은 링크를 줄이기만 한다'는 성질이 쓸모 있다 — 근거는 이 논문의 stricter 정의 하나와, 쌍 단위 규칙에서는 그 성질이 자명하다는 점이다.",
+   "angle": "kg-academic"
+  },
+  {
+   "name": "Wikify! keyphraseness (Mihalcea & Csomai, CIKM 2007)",
+   "url": "https://web.eecs.umich.edu/~mihalcea/papers/mihalcea.cikm07.pdf",
+   "verdict": "partly",
+   "checked_quote": "We estimate the probability of a term W to be selected as a keyword in a new document by counting the number of documents where the term was already selected as a keyword (count(Dkey)) divided by the total number of documents where the term appeared (count(DW)). These counts are collected from all the Wikipedia articles. / ...the average percentile ratio between the number of words in an article and the number of manually annotated keywords is around 6%. Consequently, in all the experiments we use this ratio to determine the number of keywords to be extracted from a document. / tf.idf 41.91 43.73 42.82 χ2 test 41.44 43.17 42.30 keyphraseness 53.37 55.90 54.63",
+   "correction": "인용과 F-measure 수치(54.63 대 42.82, 42.30)는 원문과 같다(https 인증서 체인 문제로 curl -k로 받음). 선택 방식이 다르다. 논문은 keyphraseness로 순위를 매기고 문서 단어 수의 약 6%만큼 위에서 자른다. 그리고 Wikipedia에 5번 이상 나온 용어만 쓴다. keyphraseness 값에 고정 threshold를 거는 방식이 아니다. 또 이 논문은 추측성 링크를 만들었다가 나중에 지우는 구조가 아니다. 링크를 만들기 전에 고르는 랭킹 점수다.",
+   "mechanism_summary": "문서의 n-gram을 후보로 잡고, 각 용어가 Wikipedia에서 링크로 선택된 문서 비율(keyphraseness)로 순위를 매긴다. 문서 길이의 약 6%만큼 상위 용어를 keyword로 고른다. 만든 링크를 나중에 강등하는 장치는 없다.",
+   "fit": "[확인] 우리 오류의 주원인인 generic entry(PDF, arXiv 같은 것)를 겨누는 entry 단위 점수로는 가장 직접 닿는다. 하지만 '나중에 지우기 쉬운 구조'의 사례가 아니라 '애초에 덜 만드는 필터'의 사례다. 분모·분자를 채울 사람이 단 링크 코퍼스가 우리에게 없다는 점도 그대로 남는다.",
+   "angle": "kg-academic"
+  },
+  {
+   "name": "Wikidata statement rank (preferred / normal / deprecated)",
+   "url": "https://www.wikidata.org/wiki/Help:Ranking",
+   "verdict": "confirmed",
+   "checked_quote": "Marking erroneous statements as deprecated instead of simply deleting such statements has three benefits: it allows other users to know not to re-add the value to the item it provides a mechanism for representing the evolution of theories and ideas ... / The default rank is the \"normal\" rank / Warning: All statements, including deprecated ones, must be verifiable in the sense that a source makes the claim whether or not the claim is true. / For templates (for e.g. info boxes) and queries (once they are implemented), per default normal ranked values will be used for a property in cases when the property has no preferred rank.",
+   "correction": "인용은 원문과 같다. 조건 하나를 보탠다. deprecated는 아무 오류에나 쓰는 것이 아니다. 어떤 출처가 실제로 그 주장을 했을 때만 쓴다(검증 가능성 요구). 그리고 rank는 확률이 아니다. normal은 정확성 판단이 없다는 중립 표시다. Wikidata는 '혹시나' 하는 statement를 일부러 만들지 않는다. 그러므로 이 사례는 추측성 생성의 사례가 아니라 강등·tombstone의 사례다.",
+   "mechanism_summary": "statement는 기본 normal rank로 들어온다. 오류로 알려진 statement는 지우지 않고 deprecated로 낮추며, 이유 qualifier를 단다. 템플릿과 질의는 preferred가 있으면 preferred를, 없으면 normal을 기본으로 쓴다.",
+   "fit": "[확인] 원문이 '다시 추가하지 않게 알린다'를 첫 번째 이점으로 직접 든다. 그래서 LLM이 지운 generic entry나 잘못된 alias를 다시 넣는 문제를 tombstone으로 막자는 제안은 출처가 받쳐 준다. rank를 사람 합의가 아니라 LLM이나 규칙이 정해야 한다는 차이는 남는다.",
+   "angle": "kg-academic"
+  },
+  {
+   "name": "Knowledge graph refinement survey (Paulheim, Semantic Web journal 2017)",
+   "url": "https://www.semantic-web-journal.net/system/files/swj1167.pdf",
+   "verdict": "partly",
+   "checked_quote": "For example, logical reasoning is applied on some knowledge graphs for validating the consistency of statements in the graph, and removing the inconsistent statements. Such post processing operations (i.e., operations applied after the initial construction of the graph) would be considered as refinement methods for this survey, and are included in the survey. Decoupling knowledge base construction and refinement has different advantages. / Note that an error here is not a single statement, but a pair of statements that cannot be true at the same time. Thus, the approach does not trivially lead to a fully automatic repairing mechanism (unless both statements are removed, which means that most likely, one correct statement is removed as well). / The silver standard method is only suitable for evaluating knowledge graph completion, not for error detection, since it assumes the knowledge graph to be correct.",
+   "correction": "인용과 평가 지표 정리(completion은 P/R/F, correction은 accuracy·AUC), silver standard 한계는 원문에 있다. '쌍 단위 모순' 문장은 저자의 일반론이 아니라 특정 접근에 대한 각주다. SDValidate는 'predicate 분포'가 아니라 relation마다 subject·object type의 특징 분포에서 얼마나 벗어나는지를 잰다. 그리고 개관 논문이라 추측성 링크를 만들고 지우는 구체적 장치는 없다. '구축과 다듬기를 분리하자'는 틀을 줄 뿐이다.",
+   "mechanism_summary": "KG 구축과 refinement를 분리하고, refinement를 completion(빠진 것 추가)과 error detection(틀린 것 찾기)으로 나눠 기법과 평가법을 정리한다. 제거는 논리 일관성 검사로 모순 statement를 지우거나, 통계 점수로 의심 statement를 표시하는 식으로 기법마다 다르다.",
+   "fit": "[확인] '만들 때는 넓게, 다듬기는 별도 단계로'라는 분리를 정당화하는 개관 문헌으로는 맞다. 우리 precision 측정 설계에 쓸 점도 있다. LLM이 키운 용어집 자체를 정답처럼 써서 error detection을 평가하면 안 된다는 점이다. 개별 기법은 typed RDF를 전제해서 우리에게 바로 옮기기 어렵다.",
+   "angle": "kg-academic"
+  },
+  {
+   "name": "KGValidator: LLM 기반 triple 검증 (Boylan et al., Quantexa, 2024)",
+   "url": "https://arxiv.org/pdf/2404.15923",
+   "verdict": "partly",
+   "checked_quote": "Validated triple { \"subject\": \"anaheim_ducks\", \"relation\": \"teamplaysport\", \"object\": \"football\", \"is_valid\": False, \"reason\": \"The given context states that the Anaheim Ducks are actually an ice hockey team. \" } / KGValidator makes use of the Instructor library, Pydantic classes, and function calling to control the generation of validation information. / GPT 3.5 WorldKnowledge 0.58 0.97 0.73 0.63 0.63 1.0 0.77 0.71 ... GPT 3.5 WorldKnowledge 0.54 0.97 0.70 0.58 0.5 0.97 0.66 0.5 / in practice the candidate triples in this work are produced by streaming through existing datasets",
+   "correction": "인용, unvalidated→validated 형식, Pydantic 사용은 원문에 있다. 수치를 고친다. GPT-3.5 WorldKnowledge의 precision은 네 데이터셋에서 0.50~0.63이다(UMLS 0.50). recall은 0.97~1.0이다. 반면 GPT-4는 같은 설정에서 precision 0.87~0.99다(UMLS만 0.57). 그러니 '검증기가 너그럽다'는 모델에 따라 다르다. 'False 판정 triple은 근거와 함께 남는다'는 원문에 없다. 이 논문은 저장·제거 구조가 아니라 평가 프레임워크다. 후보 triple도 기존 벤치마크 데이터셋을 흘려 보내서 얻는다. 구현은 IP 제한으로 공개되지 않았다.",
+   "mechanism_summary": "검증 전 triple(unvalidated)을 LLM에 넣는다. LLM은 자기 지식, 주어진 문맥, Wikidata, 웹 검색을 근거로 is_valid와 reason을 Pydantic 스키마로 낸다. 판정 결과를 KG에 반영하거나 제거하는 절차는 논문에 없다.",
+   "fit": "[확인] 후보 링크를 나중에 LLM으로 판정하는 단계의 출력 형식(is_valid + reason)으로는 바로 쓸 수 있다. 판정을 링크와 따로 저장해 재계산 뒤에도 남기는 설계는 우리 몫이다. [추정] 애매한 링크에만 검증기를 쓰자는 판단은 표 2개(GPT-3.5 높은 recall·낮은 precision)에서 나왔고, GPT-4 행은 이 판단을 약하게 만든다.",
+   "angle": "kg-academic"
+  },
+  {
+   "name": "Counting algorithm (incremental view maintenance) — Gupta, Mumick, Subrahmanian, SIGMOD 1993",
+   "url": "http://www.cs.columbia.edu/~gravano/Qual/Papers/13%20-%20Maintaining%20Views%20Incrementally.pdf",
+   "verdict": "partly",
+   "checked_quote": "Counting The counting algorithm works by storing the number of alternative derivations of each tuple t in the materialized view. We call this number count(t). ... [Abstract] Note that we store only the number of derivations, not the derivations themselves. ... The algorithm uses the stored counts to infer that hop(a, c) has one remaining derivation and therefore only deletes hop(a, e), which has no remaining derivation.",
+   "correction": "[확인] 인용은 원문과 맞다. 다만 두 문장은 본문(§1)과 초록에서 따로 왔다. [확인] hop(a,c) count 2 예시와 count 0이면 삭제하는 흐름도 원문에 있다. 과장된 점: 이 논문은 '혹시나 만든 잠정 링크'를 다루지 않는다. count는 잠정 표시가 아니라 유도 수다. 모든 파생 tuple은 확정 결과로 취급된다. [확인] 논문은 counting을 nonrecursive 뷰용으로 제시한다('We present the algorithm for nonrecursive views'). fit의 이 부분은 맞다.",
+   "mechanism_summary": "파생 tuple마다 서로 다른 유도의 수(count)를 저장한다. base tuple이 지워지면 그로 인한 유도 수만큼 count를 줄이고, count가 0이 된 tuple만 뷰에서 지운다.",
+   "fit": "[추정] 제거 쪽 장치로는 맞다. 근거: 우리 링크 규칙은 비재귀 join 하나다. 원문이 counting을 비재귀 뷰용으로 제시한다. '잠정으로 만든다'는 쪽은 이 논문이 주지 않는다. 링크 강도 점수로 쓰는 것은 우리 쪽 해석이다.",
+   "angle": "retraction-logic"
+  },
+  {
+   "name": "DRed (Delete and Rederive) — Gupta, Mumick, Subrahmanian, SIGMOD 1993",
+   "url": "http://www.cs.columbia.edu/~gravano/Qual/Papers/13%20-%20Maintaining%20Views%20Incrementally.pdf",
+   "verdict": "partly",
+   "checked_quote": "The algorithm works by first deleting a superset of the tuples that need to be deleted, and then rederiving some of them. The algorithm can also be used when the view definition is itself altered. ... First, the algorithm computes an overestimate of the deleted derived tuples ... Second, this overestimate is pruned by removing (from the overestimate) those tuples that have alternative derivations in the new database. Finally, the new tuples that need to be added are computed ... Only set semantics can be used for this algorithm.",
+   "correction": "[확인] 인용은 초록과 그대로 맞다. 3단계 설명과 set semantics 제약도 원문에 있다. 과장된 점: '과대 삭제 후 재유도'는 갱신 알고리즘 내부의 중간 단계다. 잠정 링크를 만들어 두고 나중에 강등하는 장치가 아니다. fit이 말하는 '혹시나 링크를 넉넉히 만든다'는 원문에 없는 우리 쪽 적용이다.",
+   "mechanism_summary": "재귀 뷰를 포함한 materialized 뷰를 갱신한다. 바뀐 base로 유도 하나라도 깨진 tuple을 모두 지우고, 새 DB에서 다른 유도가 있는 것은 되살린 뒤, 새로 생길 tuple을 더한다. 뷰 정의가 바뀔 때도 쓸 수 있다.",
+   "fit": "[추정] 지금 구조에는 과하다. 근거: 우리 링크는 재귀가 없어 원문 기준으로 counting 대상이다. 매칭 규칙을 바꿀 때 링크 집합을 갱신하는 용도('view definition is itself altered')는 원문이 받쳐 준다.",
+   "angle": "retraction-logic"
+  },
+  {
+   "name": "Counting/DRed/B/F 하이브리드 — Hu, Motik, Horrocks, 'Optimised Maintenance of Datalog Materialisations' (AAAI 2018)",
+   "url": "https://arxiv.org/abs/1711.03987",
+   "verdict": "partly",
+   "checked_quote": "The Delete/Rederive (DRed) and the Backward/Forward (B/F) algorithms solve this problem for general datalog, but both contain steps that evaluate rules 'backwards' by matching their heads to a fact and evaluating the partially instantiated rule bodies as queries. We show that this can be a considerable source of overhead even on very small updates. In contrast, the Counting algorithm does not evaluate the rules 'backwards', but it can handle only nonrecursive rules. We present two hybrid approaches that combine DRed and B/F with Counting so as to reduce or even eliminate 'backward' rule evaluation while still handling arbitrary datalog programs.",
+   "correction": "[확인] 인용은 arXiv 초록과 그대로 맞다. 제목·저자·AAAI 2018도 맞다. [확인] 초록만 읽었다. 본문 실험은 보지 않았다. 선행작 'Motik et al. B/F (AAAI 2015, RDFox)'는 확인하지 않았다. 과장된 점: 잠정 링크나 강등을 다루지 않는다. 입력 fact 변경에 따른 materialization 갱신 성능 논문이다. 'count를 저장하면 대체 근거를 다시 찾지 않아도 된다'는 trade-off는 초록이 말하는 범위와 맞는다.",
+   "mechanism_summary": "datalog의 모든 결과를 materialize해 두고, 입력 fact가 바뀌면 갱신한다. DRed·B/F의 '거꾸로' 규칙 평가 비용을 Counting과 섞어 줄이거나 없앤다.",
+   "fit": "[추정] 설계 근거 정도로만 쓸 만하다. 근거: 초록이 '유도 수를 들고 있으면 거꾸로 평가가 필요 없다'는 대비를 직접 말한다. 개인 KB 규모의 성능에는 옮겨질 필요가 없다.",
+   "angle": "retraction-logic"
+  },
+  {
+   "name": "Provenance semirings (how-provenance polynomials) — Green, Karvounarakis, Tannen, PODS 2007",
+   "url": "https://web.cs.ucdavis.edu/~green/papers/pods07.pdf",
+   "verdict": "partly",
+   "checked_quote": "However, the query can also calculate (f, e) from s alone and (d, e) from r alone. In a provenance application in which one of r or s is perhaps less trusted or less usable than the other the effect can be different on (f, e) than on (d, e) and this cannot be detected by why-provenance. It seems that we need to know not just which input tuples contribute but also how they contribute. ... [Figure 5] d e 2r2 + rs / f e 2s2 + rs ... For any valuation v : X→ K there exists a unique homomorphism of semirings Evalv : N[X]→ K",
+   "correction": "[확인] 인용은 원문 §4와 그대로 맞다. Figure 5의 2r^2 + rs 예시와 valuation·factorization 정리(Theorem 4.3)도 원문에 있다. 과장된 점: 원문은 '입력 변수를 0으로 두면 삭제가 된다'거나 '신뢰도·비용 semiring으로 평가해 점수만 낮춘다'를 절차로 제시하지 않는다. 원문에서 trust는 위 동기 문장 한 번뿐이다. 원문이 실제로 다루는 응용은 incomplete DB(PosBool)와 probabilistic DB다. 삭제 전파·trust 정책은 후속작(Orchestra 계열 update exchange)에 있을 것으로 보이나 [추정] 확인하지 않았다. 잠정 링크를 만드는 장치도 없다.",
+   "mechanism_summary": "입력 tuple마다 변수를 붙이고 join은 곱, union·대체 유도는 합으로 계산해 출력 tuple에 N[X] 다항식을 붙인다. 이 다항식을 임의의 commutative semiring으로 valuation해 평가할 수 있다. 제거·강등은 원문이 직접 다루지 않는다.",
+   "fit": "[추정] 이론 틀로는 맞다. 근거: 우리 링크는 join 하나라 annotation이 '공유 entry 변수의 합'으로 줄어든다. valuation을 바꿔 평가한다는 수학은 원문이 받쳐 준다. '0으로 두면 삭제, 낮은 가중치로 강등'은 이 수학에서 끌어낸 우리 쪽 적용이다.",
+   "angle": "retraction-logic"
+  },
+  {
+   "name": "JTMS (Justification-based Truth Maintenance System) — Jon Doyle, MIT AI Memo 521 / Artificial Intelligence 12, 1979",
+   "url": "https://dspace.mit.edu/handle/1721.1/5733",
+   "verdict": "partly",
+   "checked_quote": "To choose their actions, reasoning programs must be able to make assumptions and subsequently revise their beliefs when discoveries contradict these assumptions. The Truth Maintenance System (TMS) is a problem solver subsystem for performing these functions by recording and maintaining the reasons for program beliefs.",
+   "correction": "[확인] 인용은 DSpace 초록과 그대로 맞다. 제목 'A Truth Maintenance System', 1979-06-01도 맞다. [확인] 본문(AIM-521.pdf, 13.66MB 스캔)은 나도 열지 않았다. 그래서 IN/OUT 상태, '유효한 근거가 없으면 OUT', generic 표시를 OUT-list로 쓰는 식의 세부는 원문에서 보지 못했다. DSpace 요약은 belief revision과 dependency-directed backtracking을 다룬다고만 적는다. 'JTMS'라는 이름은 이 메모가 아니라 후대 명칭이다.",
+   "mechanism_summary": "추론 프로그램이 가정을 세우고 믿음마다 그 이유를 기록한다. 발견이 가정과 모순되면 기록된 이유를 따라 믿음을 고친다. 세부 절차(IN/OUT 등)는 초록 범위 밖이라 확인하지 못했다.",
+   "fit": "[추정] '용어집 결정 = 가정, 링크 = 그 위의 결론' 틀은 초록의 문제 설정과 맞는다. 근거: 초록이 '가정을 먼저 하고 모순이 드러나면 고친다'를 목적으로 적는다. 무엇이 틀렸는지는 바깥 신호가 줘야 한다는 지적은 타당하다.",
+   "angle": "retraction-logic"
+  },
+  {
+   "name": "ATMS (Assumption-based TMS) — Johan de Kleer, Artificial Intelligence 28, 1986",
+   "url": "https://dekleer.org/Publications/An%20Assumption-Based%20TMS.pdf",
+   "verdict": "confirmed",
+   "checked_quote": "As a consequence it is possible to work effectively and efficiently with inconsistent information, context switching is free, and most backtracking (and all retraction) is avoided. ... On the other hand, in an ATMS each datum is labeled with the sets of assumptions (representing the contexts) under which it holds. These assumption sets are computed by the ATMS from the problem-solver-supplied justifications. ... The inconsistent environments are called nogoods because they represent inconsistent conjunctions of assumptions.",
+   "correction": "[확인] 두 구절 모두 원문에 있다. 다만 원문 순서는 반대다. 'context switching is free'는 초록, 'labeled with the sets of assumptions'는 §1 본문이다. 인용은 이 둘을 '...'로 뒤집어 이었다. [확인] nogood 기록도 원문에 있다. 'label 크기가 지수적으로 커질 수 있다'는 이번에 원문에서 찾아보지 않았다.",
+   "mechanism_summary": "문제 해결기가 justification을 넘기면 ATMS가 각 datum에 그것이 성립하는 가정 집합들(label)을 계산해 붙인다. 철회하지 않고 모든 context를 함께 유지한다. 서로 모순인 가정 조합은 nogood로 기록해 label에서 뺀다.",
+   "fit": "[추정] '지울 필요 없이 context로 켜고 끈다'는 구조로 옮겨진다. 근거: 원문이 'all retraction is avoided'와 context별 label을 직접 말한다. 용어집 행동마다 가정 하나를 두면 원래 용어집 대 LLM 성장분 비교를 context 전환으로 할 수 있다. 이 적용은 우리 쪽 해석이다.",
+   "angle": "retraction-logic"
+  },
+  {
+   "name": "Soufflé provenance (rule number + height annotation, on-demand proof trees) — Zhao, Subotić, Scholz, 'Debugging Large-scale Datalog' (arXiv 1907.05045, TOPLAS 2020)",
+   "url": "https://arxiv.org/html/1907.05045",
+   "verdict": "partly",
+   "checked_quote": "If this is the case, we say that the rule firing of ρk generates t, and thus the identifier ρ(t)=k is stored as the rule number annotation for t. In this way, for each tuple, we track which rule is fired to generate that tuple. However, the height annotations are more involved ... We show that our method has a runtime overhead of 1.27× on average while being more flexible than existing state-of-the-art techniques.",
+   "correction": "[확인] 두 구절 모두 원문에 있다. 첫 구절은 본문, 1.27×는 초록이다. 메모리 오버헤드 1.45×도 함께 적혀 있다. 과장 없음. 다만 이 논문은 잠정 링크도, 제거·강등도 다루지 않는다. 의심스러운 tuple의 증명 트리를 설명해 줄 뿐이다. 후보 스스로도 이 점을 적었다.",
+   "mechanism_summary": "semi-naive 평가 중 tuple마다 만든 규칙 번호와 증명 높이를 저장한다. 사용자가 고른 tuple의 증명 트리를 이 annotation으로 필요할 때 재구성한다. 삭제는 다루지 않는다.",
+   "fit": "[추정] 검토 화면에서 '왜 이어졌나'를 보여 주는 입구로만 쓸모 있다. 근거: 원문의 기여가 설명용 provenance이고 제거 장치가 없다.",
+   "angle": "retraction-logic"
+  },
+  {
+   "name": "Provenance Guided Rollback Suggestions — Zhao, Subotić, Raghothaman, Scholz (arXiv 2501.09225, 2025)",
+   "url": "https://arxiv.org/abs/2501.09225",
+   "verdict": "confirmed",
+   "checked_quote": "This paper introduces an incremental debugging technique for Datalog, which determines the failing changes for a rollback in an incremental setup. Our debugging technique leverages a novel incremental provenance method. ... [본문] This process takes a set of faults provided by the user, which is a subset of ΔIDB where each tuple is either unwanted and inserted in ΔIDB or is desirable but deleted in ΔIDB.",
+   "correction": "[확인] 인용은 초록과 그대로 맞다. [확인] 본문 HTML에서 '결함 집합은 사용자가 준다'는 문장을 봤다. 후보의 '옮겨지지 않는 것'이 맞다. 과장된 점은 하나다. 잠정 표시를 붙이는 장치는 없다. 되돌릴 대상은 결과가 아니라 입력 변경(ΔEDB)이다.",
+   "mechanism_summary": "입력이 바뀌며 증분 평가된 결과에 대해 incremental provenance를 유지한다. 사용자가 원치 않게 생기거나 사라진 결과 tuple을 지목하면, 그 원인이 된 입력 변경을 찾아 되돌릴 후보(rollback)로 제안한다.",
+   "fit": "[추정] '어느 LLM 용어집 행동을 되돌릴까'에 가장 직접 맞는다. 근거: 원문의 입력 변경 → 원치 않는 결과 → 원인 변경 rollback 구조가 용어집 행동 → 틀린 링크 → 행동 철회와 같은 모양이다.",
+   "angle": "retraction-logic"
+  },
+  {
+   "name": "Differential dataflow — Frank McSherry 외 (TimelyDataflow/differential-dataflow)",
+   "url": "https://github.com/TimelyDataflow/differential-dataflow",
+   "verdict": "partly",
+   "checked_quote": "The records have the form `((degree, count), time, delta)` where the `time` field says this is the first round of data, and the `delta` field tells us that each record is coming into existence. If the corresponding record were departing the collection, it would be a negative number. ... Differential dataflow can react quickly because it only acts where changes in collections occur, and does no work elsewhere.",
+   "correction": "[확인] 인용은 README와 그대로 맞다. 증분 전파 설명도 README에 있다. 근거 없는 주장: fit의 'time 축이 있어 용어집 버전별 링크 집합도 남는다'는 README에 없다. [추정] differential dataflow는 frontier가 지나간 과거 시점을 compaction으로 합치는 것으로 알고 있어, 버전별 스냅샷 보존은 기본 동작이 아닐 수 있다. 이 점은 확인하지 않았다. 잠정 표시 장치도 없다. delta는 존재 변화량이지 잠정 여부가 아니다.",
+   "mechanism_summary": "모든 데이터를 (record, time, diff) 변경으로 흘린다. 입력에서 레코드를 빼면 음수 diff가 들어가고, 연산자는 바뀐 곳의 출력 변경만 내보낸다.",
+   "fit": "[추정] 링크 재계산을 증분으로 바꿀 때의 실행 모델 개념만 옮겨진다. 근거: README가 부호 있는 diff와 변경 지점만 처리한다는 것을 보여 준다. 수천 노트 규모에서 엔진 도입은 과하다는 후보 판단에 동의한다.",
+   "angle": "retraction-logic"
+  },
+  {
+   "name": "Event Sourcing (Complete Rebuild / Event Replay / Reversing Events) — Martin Fowler",
+   "url": "https://martinfowler.com/eaaDev/EventSourcing.html",
+   "verdict": "confirmed",
+   "checked_quote": "Event Replay: If we find a past event was incorrect, we can compute the consequences by reversing it and later events and then replaying the new event and later events. (Or indeed by throwing away the application state and replaying all events with the correct event in sequence.) ... Complete Rebuild: We can discard the application state completely and rebuild it by re-running the events from the event log on an empty application. ... Reversal is the most straightforward when the event is cast in the form of a difference.",
+   "correction": "[확인] 세 구절 모두 원문에 그대로 있다. 과장 없음. 다만 잠정 표시나 링크 개념은 없다. 상태 전체를 이벤트 로그에서 재생하는 일반 패턴이다. 어느 이벤트가 틀렸는지 알려 주지 않는다는 후보의 지적이 맞다.",
+   "mechanism_summary": "모든 상태 변경을 이벤트로 로그에 남기고, 상태는 이벤트 적용 결과로 본다. 과거 이벤트가 틀렸으면 그 이벤트와 이후 이벤트를 되돌리고 고친 이벤트로 재생하거나, 상태를 버리고 전체를 다시 재생한다.",
+   "fit": "[추정] 용어집 쪽에 가장 싸게 붙는다. 근거: 링크는 이미 용어집에서 재계산되므로, LLM 행동 로그에서 틀린 행동을 빼고 재생하면 링크도 따라 고쳐진다. 원인 행동을 찾는 일은 rollback 논문 같은 provenance가 맡아야 한다.",
+   "angle": "retraction-logic"
+  },
+  {
+   "name": "Mem0 OSS entity store (linked_memory_ids + entity boost with memory-count penalty)",
+   "url": "https://github.com/mem0ai/mem0/blob/main/mem0/memory/main.py",
+   "verdict": "partly",
+   "checked_quote": "num_linked = max(len(linked_memory_ids), 1)\n                        memory_count_weight = 1.0 / (1.0 + 0.001 * ((num_linked - 1) ** 2))\n                        boost = similarity * ENTITY_BOOST_WEIGHT * memory_count_weight",
+   "correction": "[확인] 인용과 동작 서술(0.95 병합, 0.5 미만 버림, ENTITY_BOOST_WEIGHT = 0.5 in mem0/utils/scoring.py, _remove_memory_from_entity_store, history is_deleted=1)은 현재 main(main.py 최신 커밋 d675cf6, 2026-09-24)과 맞다. 커밋 b7ad69a는 따로 확인하지 않았다. 과장된 점이 있다. Mem0는 링크를 '혹시나'로 만들지 않는다. entity→memory 링크에는 추측 표식이 없다. 감점은 차수(연결된 메모리 수)에만 반응한다. 잘못 붙은 링크를 골라내는 장치가 아니다. 링크가 빠지는 것은 메모리가 지워지거나 텍스트가 바뀔 때뿐이다. 0.5 문턱은 링크가 아니라 '질의 entity ↔ 저장된 entity' 매치에 걸린다. 참고로 감점은 완만하다. n=10이면 약 0.93, n≈32면 약 0.5, n=100이면 약 0.09다.",
+   "mechanism_summary": "메모리를 저장할 때 LLM이 뽑은 entity를 텍스트 정확 일치나 임베딩 0.95 이상으로 기존 entity 행에 합친다. 그리고 linked_memory_ids에 메모리 id를 붙인다. 링크 자체를 강등하는 장치는 없다. 질의 때 boost를 1/(1+0.001(n-1)^2)로 깎는다. 메모리를 삭제하거나 고치면 그 id가 entity 행에서 빠진다.",
+   "fit": "[확인] 'PDF·arXiv·user'처럼 흔한 항목을 차수로 눌러 두는 공식은 우리 재계산 구조에 바로 옮겨진다. 그러나 이것은 '추측 링크 + 표식 + 제거'가 아니다. 차수 감점일 뿐이다. 잘못된 alias로 생긴 링크는 걸러내지 못한다.",
+   "angle": "llm-memory-graphrag"
+  },
+  {
+   "name": "Cognee memify: cross_connect_entities (inferred edges at low feedback_weight) + apply_feedback_weights",
+   "url": "https://github.com/topoteretes/cognee/blob/main/cognee/tasks/memify/cross_connect_entities.py",
+   "verdict": "confirmed",
+   "checked_quote": "# Inferred edges start with a low feedback weight so they can be told apart from\n# extraction-time relationships and pruned first if they turn out to be noise.\nINFERRED_EDGE_FEEDBACK_WEIGHT = 0.2",
+   "correction": "[확인] 인용은 원문 그대로다. 엣지 속성 inferred: True, confidence, feedback_weight 0.2도 맞다. 추출 엣지 기본값 0.5(prepare_edges_for_storage.py:118-119)도 맞다. 후보 경로(IDF 가중 Jaccard ≥0.2, 이름 유사도 ≥0.5), confidence ≥0.7, 노드당 5개, dry_run도 맞다. implicit 평점의 alpha 0.5배도 맞다. 바로잡을 점이 셋이다. (1) 검색에서 feedback_weight를 섞는 정도는 default_feedback_influence인데, 기본값이 0.0이다(base_config.py:39, 주석 \"Opt-in by default\"). 그래서 기본 설정에서는 0.2라는 낮은 가중치가 순위에 아무 영향을 주지 않는다. (2) 평점은 (score-1)/4로 0~1에 정규화한 뒤 w += alpha*(r - w)로 반영한다. 전역 alpha는 0.1이다(base_config 주석). (3) '먼저 prune한다'는 주석일 뿐이다. inferred 엣지를 골라 지우는 코드는 저장소 전체를 grep해도 없다(cognee 0ec7a9f).",
+   "mechanism_summary": "수집이 끝난 뒤 미연결 entity 쌍을 IDF 가중 이웃 겹침과 이름 임베딩으로 고른다. LLM이 confidence ≥0.7로 판정하면 inferred=True, feedback_weight=0.2인 엣지를 쓴다. 제거는 구현돼 있지 않다. 강등은 Q&A 평점으로 feedback_weight를 이동평균 갱신하는 방식이다. 그 가중치는 feedback_influence를 0보다 크게 켤 때만 검색 거리에 섞인다.",
+   "fit": "[확인] '표식을 단 추측 링크를 낮은 초기 가중치로 넣는다'는 질문에 가장 가까운 실제 구현이다. 흔한 이웃(IDF 0)을 후보에서 빼는 처리도 우리 generic 항목 문제에 맞는다. 다만 강등 신호가 사용자 평점이다. 그 신호도 기본으로는 꺼져 있다. 우리 노트 시스템에는 평점 신호가 없다. 그래서 '나중에 지우기'는 우리가 직접 문턱값이나 규칙으로 만들어야 한다.",
+   "angle": "llm-memory-graphrag"
+  },
+  {
+   "name": "HippoRAG / HippoRAG 2 (synonymy edges by similarity threshold, node specificity, recognition-memory filter)",
+   "url": "https://arxiv.org/html/2502.14802v1",
+   "verdict": "partly",
+   "checked_quote": "2) Next, the encoder identifies synonyms by evaluating phrase pairs within the KG, detecting those with vector similarity above a predefined threshold, and adding synonym edge between such pair. This process enables the KG to link synonyms across different passages, facilitating the integration of both old and new knowledge during learning.",
+   "correction": "[확인] 인용은 원문 그대로다. 코드도 맞다. synonymy_edge_sim_threshold의 기본값은 0.8이다. node_to_node_stats에는 유사도의 max가 들어간다. weighted_fact_score /= len(ent_node_to_chunk_ids[phrase_key])도 있다. delete()는 다른 chunk가 참조하는 triple을 남긴다. HippoRAG 1의 s_i=|P_i|^-1도 2405.14831에서 확인했다. 바로잡을 점이 있다. node specificity는 엣지를 깎지 않는다. 그래프 순회 중에 깎는 것도 아니다. PPR 전에 시드 노드의 시작 확률에 곱한다(\"multiplying each query node probability ... with s_i before PPR\"). recognition memory도 synonym 엣지를 거르지 않는다. 질의에 연결된 triple을 거른다. synonym 엣지 자체를 강등하거나 지우는 장치는 없다. 덧붙일 점도 있다. 현재 코드는 엣지에 edge_kind \"synonym\"/\"fact\"/\"fact+synonym\" 표식을 단다. 논문 표에서 synonym 엣지는 추출 엣지보다 약 7배 많다(NQ, Llama-3.3: 899,031 대 125,777). 느슨하게 연결한다는 서술의 근거가 된다.",
+   "mechanism_summary": "phrase 쌍의 임베딩 유사도가 0.8 이상이면 유사도를 가중치로 하는 synonym 엣지를 넣는다. 엣지를 지우거나 강등하지는 않는다. 질의 때 흔한 노드의 시드 확률을 1/(등장 passage 수)로 깎는다. LLM은 질의-triple 연결 결과를 거른다. 문서를 삭제하면 출처 추적으로 다른 chunk가 참조하지 않는 triple만 지운다.",
+   "fit": "[확인] '1/언급 chunk 수' 가중은 우리 generic 항목 문제에 바로 듣는다. 링크를 저장하지 않는 구조와도 맞는다. 하지만 이 가중은 링크가 아니라 검색 시드에 걸린다. 그래서 chunk-chunk 링크를 걸러내려면 우리 쪽에서 링크 계산식으로 옮겨야 한다. synonym/fact 구분 표식은 '어떤 경로로 생긴 링크인가'를 남기는 사례로 쓸 만하다.",
+   "angle": "llm-memory-graphrag"
+  },
+  {
+   "name": "Graphiti / Zep (bi-temporal edges, invalidation instead of deletion, episode provenance)",
+   "url": "https://github.com/getzep/graphiti/blob/main/graphiti_core/edges.py",
+   "verdict": "partly",
+   "checked_quote": "expired_at: datetime | None = Field(\n        default=None, description='datetime of when the node was invalidated'\n    )",
+   "correction": "[확인] 필드 4개와 episodes 목록은 맞다. remove_episode가 episodes[0]이 그 에피소드인 엣지만 지우는 것도 맞다. 언급이 1개뿐인 노드만 지우는 것도 맞다(graphiti 964bb11). 과장된 점이 셋이다. (1) Graphiti는 추측 링크를 만들지 않는다. 무효화는 LLM이 '모순'이라고 판정할 때만 일어난다. (2) SearchFilters의 invalid_at/expired_at 필터는 기본값이 None이다. 무효화된 엣지는 기본 검색에서 빠지지 않는다. issue #1728은 기록된 검색 195건에서 반환된 fact의 30%가 invalid_at을 달고 있었다고 적는다. (3) issue #1728 수치(fact 3,950개 중 1,616개(41%)에 invalid_at, 표본 4건 중 3건 오판)는 맞다. 다만 같은 이슈의 Out of scope 절은 잘못 무효화된 fact를 되살리는 일을 '자체 위험이 있는 별도 작업'이라고 말한다. 그래서 '표식이라 복구할 길이 남는다'는 추정은 원문보다 강하다.",
+   "mechanism_summary": "에피소드마다 LLM이 fact 엣지를 뽑고 중복·모순을 판정한다. 모순이면 기존 엣지를 지우지 않고 invalid_at/expired_at을 채운다. 걸러 내는 것은 검색 때 선택 필터로만 된다. 출처 단위 삭제는 remove_episode가 맡는다. episodes[0]이 그 에피소드인 엣지와 그 에피소드에만 언급된 노드를 지운다.",
+   "fit": "[확인] '지우지 말고 무효 표식'과 '만든 출처 기록으로 되돌리기'는 배울 만하다. 예를 들어 alias에 retracted_at을 달면, 그 alias로 생긴 링크가 재계산에서 빠진다. 하지만 추측 링크를 만들어 두는 설계는 아니다. 모순이 없는 쓸모없는 링크(generic 항목)에는 반응하지 않는다.",
+   "angle": "llm-memory-graphrag"
+  },
+  {
+   "name": "Mem0 paper (ADD/UPDATE/DELETE/NOOP; Mem0g marks conflicting relationships invalid)",
+   "url": "https://arxiv.org/html/2504.19413v1",
+   "verdict": "partly",
+   "checked_quote": "An LLM-based update resolver determines if certain relationships should be obsolete, marking them as invalid rather than physically removing them to enable temporal reasoning.",
+   "correction": "[확인] 인용은 원문 그대로다. 현재 OSS mem0/memory에는 graph 코드가 없다(base.py, main.py, storage.py, utils.py 등뿐이다). mem0/ 아래에도 graphs 디렉터리가 없다. 따라서 invalid 표식은 논문 서술로만 확인된다. 코드로는 확인되지 않는다. 링크를 '혹시나'로 만드는 설계도 아니다. 무효화는 충돌에만 반응한다. 그래서 '추측 링크 + 제거'라는 질문에는 일부만 해당한다.",
+   "mechanism_summary": "새 사실이 오면 비슷한 기존 메모리를 찾는다. LLM이 ADD/UPDATE/DELETE/NOOP 중 하나를 고른다. Mem0g는 충돌하는 관계를 LLM resolver가 판정해 지우지 않고 invalid로 표시한다고 논문이 말한다. OSS 평면 메모리는 실제로 지우고 history에 is_deleted=1을 남긴다.",
+   "fit": "[확인] alias/new/discard 같은 LLM 연산과 모양은 비슷하다. 그러나 링크 정리가 모순에만 반응한다. 그래서 우리 precision 문제(generic 항목, 잘못된 alias)에는 거의 듣지 않는다. 쓸모 있는 것은 '물리 삭제 대신 invalid 표식'이라는 원칙 하나다.",
+   "angle": "llm-memory-graphrag"
+  },
+  {
+   "name": "LightRAG (source_id per entity/relation, delete-by-doc rebuilds from remaining sources)",
+   "url": "https://github.com/HKUDS/LightRAG/blob/main/lightrag/lightrag.py",
+   "verdict": "partly",
+   "checked_quote": "It ensures that not only the document itself but also all its derived and associated\n        data across different storage layers are removed or rebuiled. If entities or relationships\n        are partially affected, they will be rebuilded using LLM cached from remaining documents.",
+   "correction": "[확인] adelete_by_doc_id 흐름(subtract_source_ids, entities_to_delete, entities_to_rebuild)은 맞다(LightRAG 453dce8). 바로잡을 점이 있다. entity 하나에 붙는 chunk 수 상한은 MAX_SOURCE_IDS_PER_ENTITY다(기본 200). MAX_SOURCE_IDS_PER_RELATION은 relation용이다. 상한을 넘을 때의 기본 방식은 KEEP(\"Keep oldest\")다. 그래서 흔한 entity는 200개를 넘으면 새 chunk를 조용히 기록하지 않는다. README의 'demote'는 같은 원천을 주장하는 중복 문서를 다룬다. 링크와는 무관하다. 추측 링크나 신뢰도 표식은 없다.",
+   "mechanism_summary": "chunk마다 LLM이 entity와 relation을 뽑고 같은 이름이면 합친다. 각 항목은 출처 chunk id 목록(source_id)을 든다. 문서를 지우면 그 chunk id를 빼고, 남은 출처가 없으면 항목을 지운다. 남은 출처가 있으면 캐시된 LLM 출력으로 다시 만든다. 강등이나 표식은 없다.",
+   "fit": "[확인] '링크마다 어떤 항목·alias 때문에 생겼는지 남기면 그 출처를 빼는 것이 곧 삭제'라는 교훈은 맞다. 우리가 이미 하는 재계산을 출처 단위로 보여 준다. 그러나 틀린 링크를 걸러 내지는 않는다. entity당 출처 상한(KEEP)은 generic 항목을 다루는 거친 방법의 사례로 참고할 만하다. 정보를 잃는 방식이라 그대로 따르기는 어렵다.",
+   "angle": "llm-memory-graphrag"
+  },
+  {
+   "name": "Generative Agents / MemoryOS (recency decay and heat-based eviction)",
+   "url": "https://arxiv.org/html/2506.06326v1",
+   "verdict": "partly",
+   "checked_quote": "When the length of segments exceeds the maximum capacity, segments with the lowest heat are evicted.",
+   "correction": "[확인] 인용은 MemoryOS 원문 그대로다. Heat = α·N_visit + β·L_interaction + γ·R_recency이고 R_recency = exp(−Δt/μ)다. τ=5도 맞다. 원문의 추가 수치는 μ=1e+7초, α=β=γ=1, MTM 최대 segment 200개다. Generative Agents의 0.995 감쇠(\"exponential decay function over the number of sandbox game hours since the memory was last retrieved. Our decay factor is 0.995\")는 이 URL이 아니다. 별도 논문 2304.03442에서 확인했다. 둘 다 링크가 아니라 메모리 항목 단위다. 추측 링크를 만들지 않는다.",
+   "mechanism_summary": "링크를 만들지 않는다. MemoryOS는 대화 페이지를 주제 segment로 묶는다. 조회 수·길이·최근성으로 heat를 매겨 용량 초과 시 heat가 가장 낮은 segment를 내보낸다. τ를 넘으면 장기 메모리로 올린다. Generative Agents는 아무것도 지우지 않는다. recency·importance·relevance 점수로 순위만 매긴다.",
+   "fit": "[추정] '쓰이면 살아나고 안 쓰이면 가라앉는' 감쇠를 링크 가중치에 붙일 수 있다 — 사례 2개(MemoryOS, Generative Agents). 그러나 둘 다 조회 기록을 신호로 쓴다. 질의 기록이 없는 우리 구조에는 직접 옮겨지는 부분이 작다. 링크 단위 사례도 아니다.",
+   "angle": "llm-memory-graphrag"
+  },
+  {
+   "name": "A-MEM (link generation + memory evolution) — negative example: append-only links",
+   "url": "https://github.com/agiresearch/A-mem/blob/main/agentic_memory/memory_system.py",
+   "verdict": "partly",
+   "checked_quote": "if action == \"strengthen\":\n                            suggest_connections = response_json[\"suggested_connections\"]\n                            new_tags = response_json[\"tags_to_update\"]\n                            note.links.extend(suggest_connections)\n                            note.tags = new_tags",
+   "correction": "[확인] 인용은 들여쓰기만 다르고 같다. 진화 단계에서 links를 extend만 하는 것도 맞다. 그러나 '링크를 빼는 길이 없다'는 과장이다. update(memory_id, **kwargs)는 note에 있는 필드면 무엇이든 setattr로 바꾼다. 그래서 update(id, links=[...])로 목록을 통째로 바꿀 수 있다. 정확한 서술은 이렇다. 링크에 표식이 없다. 자동 제거도 없다. delete()는 지운 id를 다른 노트의 links에서 빼지 않는다. 그래서 끊긴 참조가 남는다.",
+   "mechanism_summary": "새 메모리마다 임베딩 top-k 이웃을 뽑는다. LLM이 strengthen을 고르면 suggested_connections를 note.links에 덧붙인다. 링크에는 표식이나 점수가 없다. 수동 update로 목록을 덮어쓰는 것 말고는 링크를 빼는 경로가 없다. 메모리 삭제도 다른 노트의 링크를 정리하지 않는다.",
+   "fit": "[확인] 반면교사로 맞다. LLM이 링크를 직접 저장하면 출처와 표식이 없어 골라 지울 수 없다. 링크를 용어집에서 다시 계산하는 우리 결정이 이 문제를 피한다.",
+   "angle": "llm-memory-graphrag"
+  },
+  {
+   "name": "Microsoft GraphRAG incremental update — negative example: append-only delta merge",
+   "url": "https://github.com/microsoft/graphrag/issues/2590",
+   "verdict": "confirmed",
+   "checked_quote": "In GraphRAG 3.2.0, the incremental update computes which documents were removed from\nthe input, but never uses that information. The update completes without error, and the\nremoved documents, together with their text units, entities, relationships and community\nreports, stay in the index and remain retrievable by queries.",
+   "correction": "[확인] 인용은 원문 그대로다(앞에 'In GraphRAG 3.2.0,'이 붙는다). #2590과 #2540은 둘 다 열려 있다. '제목이 겹치면 기존 행을 남긴다'는 #2540 본문(\"The entity merge keeps the pre-existing row on a title collision, discards the delta UUID\")에서 확인했다. #2590은 다른 사실도 적는다. 제거된 문서가 update_output/<timestamp>/previous/와 LLM 캐시에 full re-index 뒤에도 남는다. 원래 반면교사 사례라 추측 링크나 제거 장치가 없다는 점은 후보 서술과 같다.",
+   "mechanism_summary": "graphrag update는 새 문서만 파이프라인에 돌려 기존 인덱스에 합친다. 삭제된 입력(deleted_inputs)을 계산은 한다. 그러나 아무 데서도 쓰지 않는다. 그래서 지운 문서의 text unit, entity, relationship, community report가 남아 검색된다. 표식이나 제거 장치는 없다.",
+   "fit": "[확인] 반면교사로 맞다. 출처 추적 없이 합치기만 하면 나중에 지우는 일이 따로 큰 공사가 된다. 링크와 용어집 항목마다 출처를 남겨야 한다는 근거가 된다.",
+   "angle": "llm-memory-graphrag"
+  },
+  {
+   "name": "Wikimedia \"Add a link\" structured task (mwaddlink / Link Recommendation Service)",
+   "url": "https://phabricator.wikimedia.org/T429417 ; https://phabricator.wikimedia.org/T316079 ; https://phabricator.wikimedia.org/T386867 ; https://wikitech.wikimedia.org/wiki/Add_Link ; https://www.mediawiki.org/wiki/Growth/Personalized_first_day/Structured_tasks/Add_a_link",
+   "verdict": "confirmed",
+   "checked_quote": "T429417: \"The model itself doesn't care about user decisions at all. We the Growth team simply 'swallow' (and keep to ourselves) suggestions that were rejected before.\" / T316079: \"The default threshold for generating a link suggestion is 0.5. We can consider raising this to 0.6 or 0.7.\" + \"Run revalidateLinkRecommendations.php on the affected wikis\" / wikitech: \"A MySQL table per wiki is used for caching the actual link recommendations\" ... \"link recommendations are regenerated via the job queue\" / T386867 patch: \"pipeline: exclude country name anchors in filter step\" / mediawiki.org: \"Suggested links are machine-generated, and can be incorrect.\"",
+   "correction": "[확인] 인용문과 네 가지 장치는 모두 원문에 있다. 세 가지를 바로잡는다. (1) T429417이 실제로 바꾼 것은 문서 단위 차단이다. 원문은 \"expand the already-existing exclusion of previously rejected link destinations to rejecting any recommendations on any article that has had an Add Link recommendation reviewed in the past\"라고 쓴다. 따라서 거절된 링크 대상을 거르는 것은 원래 있던 필터다. 이 태스크는 그 위에 검토를 한 번 거친 문서 전체를 빼는 규칙을 더했다. (2) 결정이 쌓이는 테이블 이름은 growthexperiments_link_submissions다. 원문은 이 테이블이 \"contains information about both accepted and rejected recommendations\"라고 쓴다. (3) 국가·대륙 차단은 쿼리 시점 필터가 아니다. 원문은 \"alters the dataset of 'all existing links'\"라고 쓴다. 즉 파이프라인이 anchor 데이터를 다시 만들어야 반영된다. 바로 켜고 끌 수 있는 스위치가 아니다.",
+   "mechanism_summary": "anchor dictionary 매칭과 분류기 확률로 후보 링크를 만든다. threshold를 넘은 후보만 본문과 분리된 MySQL 캐시에 들어간다. 사람이 yes를 눌러야 본문에 박힌다. 제거 수단은 네 가지다. threshold를 올리고 캐시를 다시 검증한다. 거절 기록으로 걸러 낸다(먼저 링크 대상 단위로 거르고, T429417 이후로는 문서 단위로도 거른다). 문서가 편집되면 job queue가 추천을 다시 만든다. 파이프라인에서 특정 Wikidata 클래스의 대상을 뺀다.",
+   "fit": "[확인] 제안을 쌓는 캐시와 확정 링크를 분리하고 거절 기록으로 거르는 구조는 원문 그대로다. 우리 쪽에서는 재계산 결과 위에 (chunk, entry) 거절 목록을 거는 모양으로 옮길 수 있다. 클래스 단위 차단은 type 단위로 generic entry를 막는 것에 대응한다. 다만 원래 구현은 데이터 재생성 단계에서 뺀다. 우리 쪽에서는 재계산 필터에 넣으면 같은 효과를 더 싸게 얻는다. 사람 검토 루프와 학습된 score는 옮겨 오지 않는다.",
+   "angle": "pkm-wiki-tools"
+  },
+  {
+   "name": "Gerlach et al., Multilingual Entity Linking System for Wikipedia with a Machine-in-the-Loop Approach (arXiv 2105.15110)",
+   "url": "https://arxiv.org/html/2105.15110v1",
+   "verdict": "confirmed",
+   "checked_quote": "\"P(⟨m⟩) = N⟨m⟩ / N m , where N m : The number of times the mention m appears in a corpus 𝒲 g ; as an anchor or not. N ⟨m⟩ : The number of times the mention m is used as an anchor of a link. Following the approach in (Milne and Witten, 2008), we set a cutoff threshold of P(⟨m⟩) ≥ 0.065 to consider an anchor text. This helps discarding rare and anomalous usage.\" / \"accept the link if the probability the model assigns exceeds a threshold value p∗ ∈ [0, 1]\" / \"Recommendations are surfaced to editors, and their decisions and feedback are recorded for future optimization.\"",
+   "correction": "[확인] 후보의 인용문은 원문 두 조각을 이어 붙였다. 원문에서는 N m의 정의가 N⟨m⟩ 정의보다 먼저 나온다. 뜻은 바뀌지 않는다. 두 가지를 바로잡는다. (1) 0.065 cutoff는 anchor dictionary를 만들 때 한 번 거는 값이다. 원문이 밝힌 목적은 \"discarding rare and anomalous usage\"다. 흔한 말을 강등하려는 장치로 소개되지 않았다. (2) 원문은 편집자 응답을 다음 버전 재학습에 쓴다고 하지 않는다. \"recorded for future optimization\"이라고만 쓴다. n=1..10과 긴 것부터 매칭하는 방식은 원문과 맞다(\"with n = 1, …, 10\", \"we give preference to longer mentions\").",
+   "mechanism_summary": "토큰 n-gram을 긴 것부터 anchor dictionary에 대 본다. 맞으면 후보가 된다. link probability가 0.065 미만인 anchor는 dictionary에서 미리 뺀다. 분류기 확률이 p*를 넘는 후보만 편집자에게 보낸다. 편집자는 yes/no/skip으로 답한다. 링크를 만든 뒤에 지우는 장치는 논문에 없다. 강등 수단은 p*를 올리는 것뿐이다.",
+   "fit": "[확인] link probability(그 문자열이 나온 횟수 중 링크로 쓰인 비율)는 원문에 정의되어 있다. 흔하지만 링크 가치가 낮은 말을 걸러 내는 지표로 쓸 수 있다. [추정] 우리에게는 사람이 단 링크 통계가 없다. 따라서 document frequency로 대신하려면 따로 검증해야 한다 — 사례: 이 논문은 DF 대체를 다루지 않는다(0건). p*를 precision/recall 조절 다이얼로 쓰는 표(Tab. 2)는 쿼리 시점 threshold 설계의 근거가 된다.",
+   "angle": "pkm-wiki-tools"
+  },
+  {
+   "name": "Wikidata statement ranks (preferred / normal / deprecated) + P2241",
+   "url": "https://www.wikidata.org/wiki/Help:Ranking",
+   "verdict": "confirmed",
+   "checked_quote": "\"it allows other users to know not to re-add the value to the item\" (deprecated로 표시할 때의 세 가지 이점 중 첫째). 나머지 둘: \"it provides a mechanism for representing the evolution of theories and ideas\", \"it upholds and establishes the integrity of Wikidata as a secondary knowledge base\". 페이지는 normal을 모든 statement의 기본값으로 두고, deprecated는 따로 요청하지 않으면 쿼리 결과에 들어가지 않는다고 설명한다. P2241(reason for deprecated rank)은 qualifier로 쓰인다.",
+   "correction": "[확인] 인용과 설명은 맞다. 한 가지만 짚는다. 원문은 normal을 \"neutral\" 기본값으로 정의한다. \"판단을 보류한 상태\"라는 말은 후보 쪽의 해석이다.",
+   "mechanism_summary": "누구든 statement를 추가한다. 새 statement는 기본으로 normal rank를 받는다. 틀린 statement는 지우지 않고 deprecated로 낮춘다. 이유는 P2241로 단다. 기본 쿼리와 템플릿은 deprecated를 빼고 읽는다. 다시 넣는 것을 막는 것이 남겨 두는 명시된 이유 중 하나다.",
+   "fit": "[확인] '지우지 말고 강등하고 흔적을 남겨 같은 값이 다시 들어오는 것을 막는다'는 원리가 원문에 적혀 있다. 우리 쪽에서는 용어집 entry와 alias에 rank를 붙이는 모양으로 옮긴다. 그러면 LLM의 discard가 흔적을 남긴다. 다음 성장 단계에서 같은 alias가 다시 들어오는 것도 막을 수 있다. 누가 deprecated로 바꿀지는 따로 정해야 한다.",
+   "angle": "pkm-wiki-tools"
+  },
+  {
+   "name": "Obsidian Virtual Linker plugin",
+   "url": "https://github.com/vschroeter/obsidian-virtual-linker",
+   "verdict": "confirmed",
+   "checked_quote": "\"The auto generated links are post-processed, so they neither change your note text to hard-coded links enclosed in brackets not appear in the graph view or reference counting.\" README는 linker-exclude 태그, 폴더 제외 목록, linker-match-case / linker-ignore-case frontmatter, 같은 노트 안의 중복 virtual link 억제, 우클릭 메뉴의 \"Convert to real link\"를 설명한다.",
+   "correction": "[확인] 인용은 원문 그대로다. 원문의 오타 \"not appear\"도 그대로 들어 있다. 한 가지를 짚는다. real link가 이미 있는 대상을 숨기는 것은 기본 동작이 아니다. 선택해서 켜는 옵션이다.",
+   "mechanism_summary": "화면을 그릴 때 노트 제목과 alias를 본문에 매칭해 virtual link를 보여 준다. 이 링크는 파일에 쓰이지 않는다. graph나 backlink 수에도 잡히지 않는다. 링크를 빼는 수단은 linker-exclude 태그와 폴더 제외다. 사람이 고른 것만 Convert to real link로 승격된다.",
+   "fit": "[확인] 매칭으로 계산하고, 저장하지 않고, 확정 링크와 분리하는 구조가 우리와 같다. exclude 태그는 entry 단위로 링크를 끄는 스위치에 대응한다. 승격은 사람이 한다. 우리 쪽에는 승격할 사람이 없다.",
+   "angle": "pkm-wiki-tools"
+  },
+  {
+   "name": "TiddlyWiki Freelinks plugin",
+   "url": "https://github.com/TiddlyWiki/TiddlyWiki5/blob/master/plugins/tiddlywiki/freelinks/readme.tid",
+   "verdict": "partly",
+   "checked_quote": "\"Use `$:/config/Freelinks/TargetFilter` to define which tiddlers are eligible for auto-linking.\" / \"Word boundary checking can be configured in the settings panel. When enabled (default for Western languages), links are created only for complete words.\" / \"When multiple tiddler titles match the same text, longer titles take precedence over shorter ones.\" / \"Use `$:/config/Freelinks/MaxLinks` to set the maximum number of links rendered per text node (default: 500).\"",
+   "correction": "[확인] 인용은 원문 그대로다. 세 가지를 바로잡는다. (1) readme는 태그로 링크 대상을 넣고 빼는 방법을 말하지 않는다. TargetFilter가 filter 식이라는 것만 말한다. 태그를 쓴다는 것은 TiddlyWiki의 일반 filter 문법에서 끌어낸 추론이다. (2) MaxLinks는 품질을 위한 강등 장치가 아니다. 원문의 목적은 \"protects against DOM overload\"다. (3) 이 plugin은 링크를 '잠정' 상태로 표시하지 않는다. 오류를 강등하는 장치도 없다. 대상 집합을 켜고 끄는 filter만 있다.",
+   "mechanism_summary": "Aho-Corasick으로 tiddler 제목을 찾는다. 렌더할 때만 링크로 그린다. 기본은 word boundary 매칭이다. 겹치면 긴 제목이 이긴다. 제거는 TargetFilter로 대상에서 빼거나 Enable로 전체를 끄는 것이다. 잠정과 확정을 나누는 계층은 없다.",
+   "fit": "[확인] word boundary 매칭과 재계산 구조는 우리와 같다. 쓸 만한 점은 링크에 참여할 대상을 데이터(filter 식) 한 곳에서 정한다는 것이다. '혹시나 링크를 만들고 나중에 강등한다'는 질문에 대한 답은 주지 못한다.",
+   "angle": "pkm-wiki-tools"
+  },
+  {
+   "name": "Obsidian Backlinks: linked mentions vs unlinked mentions",
+   "url": "https://obsidian.md/help/Plugins/Backlinks ; https://forum.obsidian.md/t/backlinks-option-to-hide-unlinked-mentions-from-notes-with-linked-mentions/46049",
+   "verdict": "partly",
+   "checked_quote": "Help: \"Unlinked mentions are backlinks to any unlinked occurrence of the name of the active note.\" / Forum 첫 글: \"Often in documentation, a keyword will appear numerous times in the same context. It's typical for the first mention of a keyword to include an internal link, but for subsequent mentions to be plain-text. This can create a lot of \"false positives\" in the \"Unlinked Mentions\" section of Backlinks.\"",
+   "correction": "[확인] 두 인용은 원문에 있다. 세 가지를 바로잡는다. (1) 가져온 help 페이지 본문에는 unlinked mention을 링크로 바꾸는 방법이 없다. 그런 기능이 있다면 이 출처 밖의 지식이다. (2) 포럼의 중복 억제 제안은 구현되지 않았다. 스레드는 CSS 우회 코드 조각으로 끝난다. (3) 이것은 후보 링크를 저장하는 구조가 아니다. 이름 문자열 검색 결과를 별도 목록으로 보여 줄 뿐이다. 강등 수단도 없다.",
+   "mechanism_summary": "현재 노트 이름이 링크 없이 나온 자리를 unlinked mentions 목록으로 따로 보여 준다. 확정 링크인 linked mentions와 나뉜다. 후보를 숨기거나 강등하는 공식 장치는 출처에 없다. 같은 노트 안에서 반복되는 키워드를 숨기자는 요청은 사용자 제안으로만 남아 있다.",
+   "fit": "[확인] '확정'과 '후보'를 두 목록으로 나누는 UI 선례로만 쓸 수 있다. 포럼 글은 같은 문서 안에서 키워드가 반복되면 false positive가 쌓인다고 증언한다. 이것은 우리 generic entry 증상과 같은 모양이다. 지우기 쉬운 구조의 사례로는 약하다.",
+   "angle": "pkm-wiki-tools"
+  },
+  {
+   "name": "Obsidian Smart Connections plugin",
+   "url": "https://github.com/brianpetro/obsidian-smart-connections",
+   "verdict": "confirmed",
+   "checked_quote": "\"Right click a result to hide it from the list\" — README는 이어서 Unhide all로 숨긴 결과를 되살리는 방법, pin으로 결과를 늘 보이게 하는 방법, 결과를 노트로 끌어다 놓아 링크를 만드는 방법, 결과마다 붙는 similarity score를 설명한다.",
+   "correction": "[확인] 인용과 기능 설명은 맞다. 숨김 상태가 노트를 다시 인덱싱한 뒤에도 남는지는 README에서 확인하지 못했다. 이 질문은 우리 재계산 구조에 옮길 때 중요하다. 소스나 데이터 파일을 보면 알 수 있다.",
+   "mechanism_summary": "embedding 유사도로 관련 노트를 Connections 패널에 제안한다. 노트 파일은 바뀌지 않는다. 사람이 결과를 숨기고, 되살리고, pin한다. 끌어다 놓은 것만 실제 링크가 된다.",
+   "fit": "[확인] 제안을 지우지 않고 되돌릴 수 있게 숨기는 사례다. pin으로 반대 방향의 승격도 한다. 후보는 용어집이 아니라 embedding으로 만든다. 숨김은 사람이 누른다. (pair, hidden) 플래그를 재계산과 따로 저장하는 아이디어의 근거로 쓸 수 있다.",
+   "angle": "pkm-wiki-tools"
+  },
+  {
+   "name": "DBpedia Spotlight (Mendes et al. 2011) — support / confidence",
+   "url": "https://www.dbpedia-spotlight.org/docs/spotlight.pdf",
+   "verdict": "confirmed",
+   "checked_quote": "\"Due to our generality and flexibility requirements, we decided to employ minimal pre-filtering and postpone the selection to a user-configured post-disambiguation configuration stage.\" / \"the Saxon_genitive ('s) is very commonly found in English texts to indicate possession ... its annotation is rather uninformative. An indicator for that is that it has only seven Wikipedia inlinks. With the support parameter, users can specify the minimum number of inlinks a DBpedia resource has to have in order to be annotated.\" / \"Users can provide whitelists (allowed) or blacklists (forbidden) of URIs for annotation.\"",
+   "correction": "[확인] 인용은 원문 그대로다. 후보는 support가 '드문 대상'을 거르므로 우리와 방향이 반대라고 썼다. 이 판단은 반만 맞다. 원문의 예인 's는 본문에 아주 흔히 나오지만 inlink는 7개뿐이다. 즉 support가 잡아낸 것은 '흔히 나오는데 링크 대상으로는 드문' 경우다. 이것은 link probability가 낮은 경우와 같은 모양이다. 우리 generic entry(PDF, user)와도 같은 축이다. 이름이 같은 축은 아니다. 차이는 인용 수를 셀 사람이 단 링크가 우리에게 없다는 데 있다. 또 원문에는 클래스 whitelist와 함께 blacklist도 있다.",
+   "mechanism_summary": "spotting 단계에서 후보를 일부러 넓게 만든다. 주석마다 support, topic pertinence, contextual ambiguity, confidence를 붙인다. 요청마다 하한을 정하면 그 요청에서 기준 미달 주석이 빠진다. URI·클래스 whitelist/blacklist와 SPARQL로 대상을 좁힌다. 저장된 링크를 지우는 것이 아니다. 읽을 때마다 고른다.",
+   "fit": "[확인] '넓게 만들고 거르기는 쿼리 시점으로 미룬다'는 설계가 논문에 명시되어 있다. recall 1.00에 precision이 낮은 우리 상태와 맞는다. 링크마다 score 몇 개를 붙이고 읽을 때 threshold와 blacklist로 고르는 모양으로 옮길 수 있다.",
+   "angle": "pkm-wiki-tools"
+  },
+  {
+   "name": "zettelkasten.de — Backlinking Is Not Very Useful -- Often Even Harmful (반대 입장)",
+   "url": "https://zettelkasten.de/posts/backlinks-are-bad-links/",
+   "verdict": "confirmed",
+   "checked_quote": "\"Backlinks are bad linking on crack and steroids. Not only do they not provide any link context other than the title, but they are placed automatically.\"",
+   "correction": "[확인] 인용은 원문 그대로다. 대안은 링크 맥락을 적어 손으로 다는 링크라는 요약도 맞다. 이 글은 잠정 링크를 만들지 않는다. 강등 장치도 없다. 반론으로만 쓸 수 있다.",
+   "mechanism_summary": "자동 링크를 만들지 않는다. 링크마다 이유를 적어 사람이 손으로 단다.",
+   "fit": "[확인] 반론 자료다. 자동 링크는 고를 짐을 읽는 쪽에 떠넘긴다는 주장이다. 우리 설정에서는 강등된 링크를 기본 보기에서 숨기거나 score로 정렬해야 한다는 근거가 된다. 수동 링크 원칙 자체는 사람 검토가 없는 우리 설정에 옮겨지지 않는다.",
+   "angle": "pkm-wiki-tools"
+  },
+  {
+   "name": "Meta-blocking + Block Purging / Block Filtering (Papadakis et al.; Gagliardelli et al.)",
+   "url": "https://helios2.mi.parisdescartes.fr/~themisp/publications/tkde13-metablocking.pdf ; https://arxiv.org/html/2204.08801",
+   "verdict": "confirmed",
+   "checked_quote": "TKDE13 p.2: \"For example, Block Purging [25] a-priori discards oversized blocks, which involve an excessively high number of unnecessary comparisons. To illustrate this notion, consider the block of \"91335\" in Figure 1(b)\" / p.3: \"In this way, the pruning of the blocking graph becomes the process of removing edges with low weights on the grounds that they (are likely to) link dissimilar entities.\" / arXiv 2204.08801: \"Block Purging ... discards all the blocks that contain more than half of the entity profiles in the collection in a parameter-free way.\" \"... removing each entity eᵢ from the largest 20% blocks in which it appears.\"",
+   "correction": "[확인] 두 구절은 둘 다 TKDE13 원문에 그대로 있다. 다만 원문 순서는 반대다. Block Purging 문장이 서론(p.2)에 먼저 나온다. 그 뒤에 edge 제거 문장(p.3)이 나온다. [확인] '절반 넘게 담은 block 버림, parameter 없음'과 'Block Filtering 20%'는 TKDE13이 아니라 arXiv 2204.08801(Gagliardelli, Papadakis 외, Generalized Supervised Meta-blocking)에 적혀 있다. TKDE13의 Block Purging [25]는 이름만 나오고 기준은 적혀 있지 않다. [확인] TKDE13의 WEP 임계값은 '평균 edge weight'다. 근거는 실험상 잘 맞았다는 것이다. 이론적 기준은 아니다.",
+   "mechanism_summary": "[확인] redundancy-positive blocking이 token 같은 key를 공유하는 레코드를 모두 같은 block에 넣는다. 그래서 후보 pair가 일부러 넘치게 생긴다. 이 block들은 blocking graph로 바뀐다. 각 edge는 weighting scheme(CBS, JS 등)으로 weight를 받는다. 제거는 두 층이다. Block Purging과 Block Filtering이 큰 block을 통째로 버린다. WEP/CEP/WNP/CNP가 weight 낮은 edge를 잘라낸다. 둘 다 block 집합에서 다시 계산된다.",
+   "fit": "[확인] 구조가 같다. glossary 항목은 block이다. 같은 항목을 언급하는 두 chunk는 blocking graph의 edge다. [추정] Block Purging의 '절반 넘게 담은 block 버림'은 PDF/arXiv/'user' 같은 hub 항목에 그대로 옮겨 쓸 수 있다. 사례 1개: 원문의 \"91335\" block은 모든 entity를 담아 쓸데없는 비교만 만든다. 이것이 같은 패턴이다. 잘못된 alias는 보통 크기의 block을 만든다. 그래서 purging으로는 잡히지 않는다. ER에는 뒤에 따로 matcher가 있다. 우리에게는 그 단계가 없다.",
+   "angle": "ir-entity-resolution"
+  },
+  {
+   "name": "Link probability threshold (Milne & Witten, Learning to Link with Wikipedia, CIKM 2008)",
+   "url": "https://complexevents.com/wp-content/uploads/2008/12/cikm08-learningtolinkwithwikipedia.pdf",
+   "verdict": "confirmed",
+   "checked_quote": "\"The link detection process starts by gathering all n-grams in the document, and retaining those whose probability exceeds a very low threshold. This threshold—the value of which is established in the next section—is only intended to discard nonsense phrases and stop words. All the remaining phrases are disambiguated using the classifier\" / \"This approach will always make mistakes, no matter what threshold is chosen.\" / \"identifies 6.5% link probability as the point where precision and recall are balanced.\"",
+   "correction": "[확인] 인용은 원문 그대로다. 생략 부분은 '—the value of which is established in the next section—'이다. [확인] 6.5%는 따로 튜닝한 값이 아니다. 100개 문서에서 precision과 recall이 균형을 이룬 지점이다. [확인] '고정 임계값은 늘 틀린다'는 말은 link probability만 쓰는 Mihalcea & Csomai의 Wikify를 겨냥한 것이다. 저자들의 첫 단계 필터를 두고 한 말이 아니다. [확인] 걸러진 후보는 그 자리에서 버려진다. 점수를 저장해 두고 나중에 강등하는 구조는 아니다. 또 문서→Wikipedia 문서 link이고, chunk 사이 link가 아니다.",
+   "mechanism_summary": "[확인] 시스템이 문서의 n-gram 가운데 anchor와 맞는 것을 모두 모은다. 아주 낮은 link probability 임계값만 먼저 적용한다. link probability는 anchor로 쓴 문서 수를 언급한 문서 수로 나눈 값이다. 남은 후보는 link probability를 feature 하나로 쓰는 classifier가 남기거나 버린다.",
+   "fit": "[추정] 항목마다 '언급이 의미 있는 link가 되는 비율'을 저장하는 발상은 hub 항목 문제에 맞는다. 근거는 원문이 stop word를 이 값으로 걸러낸다는 점 하나다. 우리에게는 anchor 대 mention 카운트가 없다. 그래서 LLM이나 사람이 표본 link를 판정한 결과, 또는 document frequency로 대신해야 한다. 이 대체가 통하는지는 실험 전에는 모른다.",
+   "angle": "ir-entity-resolution"
+  },
+  {
+   "name": "Elasticsearch More Like This: max_doc_freq / stop_words / minimum_should_match",
+   "url": "https://www.elastic.co/guide/en/elasticsearch/reference/current/query-dsl-mlt-query.html",
+   "verdict": "partly",
+   "checked_quote": "\"max_doc_freq: The maximum document frequency above which the terms will be ignored from the input document. This could be useful in order to ignore highly frequent words such as stop words. Defaults to unbounded\" / minimum_should_match: \"After the disjunctive query has been formed, this parameter controls the number of terms that must match. ... (Defaults to \"30%\").\"",
+   "correction": "[확인] 인용은 원문 그대로다. [확인] MLT는 link를 만들지도 저장하지도 않는다. 질의할 때 비슷한 문서를 찾을 뿐이다. 그래서 '임시 link를 만들고 나중에 지운다'는 질문에는 직접 답하지 않는다. [확인] '재색인 없이 바로 바뀐다'는 문장은 페이지에 없다. 이 parameter들이 질의 parameter라서 그렇게 추론한 것이다. 페이지에 있는 것은 term vector를 저장하면 분석이 빨라진다는 언급뿐이다.",
+   "mechanism_summary": "[확인] 입력 문서의 term으로 disjunctive query를 만든다. 이때 max_doc_freq를 넘는 term과 stop_words에 든 term은 query에서 빠진다. minimum_should_match는 몇 개 term이 맞아야 하는지 정한다. 기본값은 30%다. link를 저장하거나 지우는 단계는 없다.",
+   "fit": "[추정] link를 glossary와 chunk에서 다시 계산하는 우리 구조와 닮았다. glossary 항목에 max_doc_freq를 걸면 PDF/arXiv를 glossary에서 지우지 않고도 link 계산에서 뺄 수 있다. minimum_should_match는 '공유 항목 k개 이상'에 대응한다. 다만 MLT는 BM25 term 기반이다. 잘못된 alias는 다루지 않는다.",
+   "angle": "ir-entity-resolution"
+  },
+  {
+   "name": "Adamic-Adar index / Resource Allocation (NetworkX link prediction)",
+   "url": "https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.link_prediction.adamic_adar_index.html",
+   "verdict": "partly",
+   "checked_quote": "\"∑_{w ∈ Γ(u) ∩ Γ(v)} 1/log|Γ(w)|\" / ebunch: \"If ebunch is None then all nonexistent edges in the graph will be used.\" / \"leads to zero-division for nodes only connected via self-loops\"",
+   "correction": "[확인] 공식과 ebunch 설명은 원문 그대로다. [확인] 페이지는 점수 계산만 정의한다. 임계값, top-k, '약한 link 강등'은 페이지에 없다. 그 부분은 수집 agent가 덧붙인 사용법이다. [확인] 300 chunk 항목이면 1/ln300≈0.175, 2 chunk 항목이면 1/ln2≈1.44다. 계산은 맞다.",
+   "mechanism_summary": "[확인] 이웃을 공유하는 노드 쌍마다 공유 이웃 w에 대해 1/log(deg w)를 더한 점수를 준다. ebunch=None이면 그래프에 없는 모든 edge를 점수 매긴다. link를 지우거나 강등하는 장치는 원문에 없다. 점수를 어디서 자를지는 사용자 몫이다.",
+   "fit": "[추정] chunk-항목 bipartite graph에 그대로 적용된다. chunk 쌍의 이웃이 곧 공유 항목이기 때문이다. 그러면 hub 항목의 기여가 degree에 따라 줄어든다. label도 저장된 edge도 필요 없다. degree만 보므로 드문 항목에 붙은 잘못된 alias는 오히려 높은 점수를 받는다.",
+   "angle": "ir-entity-resolution"
+  },
+  {
+   "name": "Splink: predict threshold + cluster_pairwise_predictions_at_threshold",
+   "url": "https://moj-analytical-services.github.io/splink/demos/tutorials/05_Predicting_results.html",
+   "verdict": "confirmed",
+   "checked_quote": "\"Optionally, a threshold_match_probability or threshold_match_weight can be provided, which will drop any row where the predicted score is below the threshold.\" / \"df_predictions = linker.inference.predict(threshold_match_probability=0.1)\" / \"clusters = linker.clustering.cluster_pairwise_predictions_at_threshold( df_predictions, threshold_match_probability=0.2\"",
+   "correction": "[확인] 튜토리얼은 0.1에서 predict한다. 그 결과를 0.2에서 한 번 cluster한다. 0.5는 개념 설명에만 나온다. 같은 예측을 여러 임계값으로 다시 묶는 예시는 없다. [확인] predict 단계에서 0.1 미만 행은 이미 버려진다. 그래서 그보다 낮은 컷으로 되돌리려면 predict를 다시 돌려야 한다. [확인] u-probability로 hub에 벌점을 준다는 설명은 이 페이지에 없다. 수집 agent의 추론이다.",
+   "mechanism_summary": "[확인] blocking rule이 후보 pair를 만든다. predict()가 pair마다 match_weight와 match_probability를 붙인 행을 만든다. 임계값을 주면 그 아래 행은 버려진다. 저장한 예측은 connected components로 다른 임계값에서 다시 묶을 수 있다.",
+   "fit": "[추정] '모든 후보 link를 점수와 함께 저장하고, 읽을 때 자른다'는 형태가 사용자 질문에 가장 직접 맞는다. 근거는 predict와 cluster가 분리된 이 튜토리얼 1개다. Fellegi-Sunter의 '같은 entity인가'를 '연결해야 하는가'로 바꾸는 것이 통하는지는 모른다. 공유 항목을 비교 수준으로 넣고 EM을 돌려 봐야 알 수 있다.",
+   "angle": "ir-entity-resolution"
+  },
+  {
+   "name": "spaCy EntityLinker: alias candidates + threshold → NIL",
+   "url": "https://spacy.io/api/entitylinker",
+   "verdict": "confirmed",
+   "checked_quote": "\"Confidence threshold for entity predictions. The default of None implies that all predictions are accepted, otherwise those with a score beneath the threshold are discarded. If there are no predictions with scores above the threshold, the linked entity is NIL.\" / get_candidates: \"Defaults to CandidateGenerator, a function looking up exact, case-dependent aliases in the KB.\"",
+   "correction": "[확인] 인용은 원문 그대로다. [확인] n_sents 기본값은 0이다. incl_prior 기본값은 True다. [확인] threshold는 pipeline 설정값이다. 점수를 저장해 두는 장치가 아니다. 그래서 엄격도를 바꾸려면 문서를 다시 처리해야 한다. 이미 만든 link를 읽을 때 강등하는 구조는 아니다.",
+   "mechanism_summary": "[확인] get_candidates가 KB에서 대소문자를 구분하는 정확한 alias로 후보를 찾는다. 모델이 문맥(n_sents)과 KB prior로 후보마다 점수를 매긴다. threshold 아래 후보는 버려진다. 남는 후보가 없으면 mention은 NIL이 된다.",
+   "fit": "[확인] 우리 word-boundary glossary 매칭은 get_candidates 단계와 같다. 우리는 거기서 멈춘다. [추정] mention마다 문맥 점수를 붙이면 일반어로 쓰인 'user'나 잘못된 alias가 NIL로 떨어진다. 그러면 chunk 사이 link도 재계산 때 사라진다. 대신 학습된 모델이나 임베딩·LLM 판정이 mention마다 필요하다.",
+   "angle": "ir-entity-resolution"
+  },
+  {
+   "name": "Retrieve & Re-Rank (Sentence-Transformers)",
+   "url": "https://sbert.net/examples/sentence_transformer/applications/retrieve_rerank/README.html",
+   "verdict": "confirmed",
+   "checked_quote": "\"we first use a retrieval system that retrieves a large list of e.g. 100 possible hits which are potentially relevant for the query.\" / \"we use a re-ranker based on a CrossEncoder that scores the relevancy of all candidates for the given search query.\"",
+   "correction": "[확인] 인용은 원문 그대로다. 생략된 끝부분은 'for the given search query'다. [확인] 이것은 질의→문서 검색이다. 저장된 link를 강등하는 구조는 아니다. 'first-stage list는 편집되지 않는다'는 문장은 페이지에 없다. 구조상 그렇다는 추론이다.",
+   "mechanism_summary": "[확인] 값싼 retriever가 후보를 넉넉히(예: 100개) 가져온다. CrossEncoder가 질의와 후보를 함께 읽고 모든 후보에 관련도 점수를 매긴다. 최종 순위는 이 점수로 정해진다.",
+   "fit": "[추정] glossary link(recall 1.00)를 1단계로 두고, chunk를 열거나 질의할 때 후보 쌍만 다시 점수 매기는 구조로 옮길 수 있다. 근거는 2단계 구조가 같다는 점 하나다. chunk 쌍 점수를 캐시할지 매번 계산할지는 정해야 한다. re-ranker가 보는 것은 주제 관련도다. '같은 개념인가'는 아니다.",
+   "angle": "ir-entity-resolution"
+  },
+  {
+   "name": "Neo4j GDS Node Similarity (similarityCutoff / topK / degree cutoffs)",
+   "url": "https://neo4j.com/docs/graph-data-science/current/algorithms/node-similarity/",
+   "verdict": "confirmed",
+   "checked_quote": "\"Two nodes are considered similar if they share many of the same neighbors.\" / \"similarityCutoff Float 1e-42 ... Lower limit for the similarity score to be present in the result.\" / \"topK Integer 10 ... Limit on the number of scores per node. The K largest results are returned.\" / \"degreeCutoff Integer 1 ... Inclusive lower bound on the node degree for a node to be considered in the comparisons.\" / \"This bipartite graph has two node sets, Person nodes and Instrument nodes.\"",
+   "correction": "[확인] 예시는 Person-LIKES-Instrument다. Item이 아니다. [확인] metric은 JACCARD, OVERLAP, COSINE 셋이다. 관계 weight도 받는다('entries are implicitly given a weight of 1 when A,B are unweighted'). [추정] 그래서 '평범한 Jaccard는 hub를 낮추지 못한다'는 맞다. 그래도 chunk-항목 edge에 IDF 같은 weight를 미리 주면 weighted 계산으로 hub를 낮출 수 있다. 실행해 보지는 않았다. [확인] degree cutoff는 비교 대상 노드에 걸린다. 원문 표현은 'for a node to be considered in the comparisons'다.",
+   "mechanism_summary": "[확인] bipartite graph에서 첫째 노드 집합의 두 노드가 이웃을 공유하면 similarity를 계산한다. 결과는 점수 속성(writeProperty)을 가진 관계로 쓰인다. similarityCutoff가 낮은 점수를 빼고, topK가 노드마다 상위 k개만 남긴다. 그래서 파생 edge와 그 제거 장치가 함께 있다.",
+   "fit": "[확인] chunk-항목에서 chunk-chunk link를 파생하는 우리 방식이 라이브러리 호출 하나로 있다. 점수를 edge에 저장하므로 지우지 않고 질의 때 점수로 거를 수 있다. 잘못된 alias는 이 방식으로도 구별되지 않는다.",
+   "angle": "ir-entity-resolution"
+  },
+  {
+   "name": "Hubness reduction (scikit-hubness)",
+   "url": "https://scikit-hubness.readthedocs.io/en/latest/documentation/concepts.html",
+   "verdict": "partly",
+   "checked_quote": "\"Hubs are objects that appear unwontedly often among the k-nearest neighbor lists of other objects, while antihubs hardly or never appear in these lists.\" / \"retrieve n_candidates -nearest neighbors using an ANN method refine and reorder the candidate list by hubness reduction return n_neighbors nearest neighbors from the reordered candidate list\" / \"'mp' or 'mutual_proximity' use mutual proximity (Gaussian or empiric distribution) as implemented in MutualProximity\"",
+   "correction": "[확인] hub 정의 인용은 원문 그대로다. [확인] 이 페이지는 mutual proximity, local scaling, DisSim Local의 이름과 클래스만 나열한다. 'secondary distance'라는 설명이나 '양쪽이 서로를 높게 순위 매겨야 link로 친다'는 규칙은 이 페이지에 없다. 수집 agent의 배경지식이다. [확인] 원본 index를 건드리지 않는다는 문장도 없다.",
+   "mechanism_summary": "[확인] ANN이 n_candidates개 이웃 후보를 가져온다. hubness reduction이 후보 목록을 다시 정렬한다. 그 결과에서 n_neighbors개를 돌려준다. 후보를 넉넉히 뽑은 뒤 hub를 아래로 미는 구조다. 다만 각 방법이 어떻게 미는지는 이 페이지에 없다.",
+   "fit": "[추정] '몇몇 항목이 모든 것에 붙는다'는 우리 문제의 벡터 공간 버전이다. 근거는 hub 정의 하나다. mutual 조건(A의 top-k에 B, B의 top-k에 A)을 chunk link에 옮기려면 MutualProximity 원 논문이나 클래스 문서를 따로 확인해야 한다. 이 방법은 거리 행렬에서 돈다. glossary 공동 언급에 그대로 쓰이지는 않는다.",
+   "angle": "ir-entity-resolution"
+  },
+  {
+   "name": "mindbase v1 link index: links 표의 origin·confidence 열 + markdown 링크 diff 재계산",
+   "url": "/home/ssafy/workspace/alt/lab-notes/llm-wiki-implementations/lab/repos/frankchu91_mindbase-llm-wiki/packages/core/src/graph/index/wiki-index.ts:198-217",
+   "verdict": "partly",
+   "checked_quote": "`DELETE FROM links WHERE source_slug = ? AND source_project_id = ? AND target_slug = ? AND origin = 'markdown'` (wiki-index.ts:216) / \"Origin is set to 'llm' to distinguish from markdown-derived edges.\" (wiki-index.ts:271) / insights.ts:55-58 \"// 6. Ambiguous links — collect inferred/ambiguous edges for the suggestion layer ... .filter((e) => e.confidence === 'inferred' || e.confidence === 'ambiguous')\" / suggestions.ts:92 \"${g.title} is referenced ${g.inboundCount} times, but ${ambiguousCount} of those edges are uncertain — clarify what this concept means.\"",
+   "correction": "[확인] 인용 두 개는 원문 그대로다. [확인] 'llm 행을 지우는 경로는 따로 없다'는 과장이다. deletePage()(wiki-index.ts:324-325)가 그 페이지의 행을 origin과 상관없이 모두 지운다. 출처별로 골라 지우는 경로가 없다는 점만 맞다. [확인] 'confidence로 거르는 코드를 못 찾았다'는 틀렸다. insights.ts:57이 inferred/ambiguous edge를 걸러 suggestion 층에 넘긴다. suggestions.ts:80-96은 불확실한 edge가 4개 이상 향하는 hub 페이지에 god_node_disambiguation 제안을 낸다(GOD_NODE_AMBIGUOUS_THRESHOLD = 4). analysis.ts:133-134의 getSurprising도 confidence에 점수를 준다. export.ts:190은 inferred/ambiguous edge를 점선으로 그린다. [확인] confidence_log는 schema.ts 밖에서 쓰이지 않는다. 이 부분은 맞다.",
+   "mechanism_summary": "본문 [[wikilink]]를 regex로 뽑아 origin='markdown' 행으로 넣고, 줄의 ^[inferred]/^[ambiguous] 표시를 confidence로 읽는다. LLM link 도구는 origin='llm', confidence='inferred' 행을 넣는다. 재색인 때 markdown 행만 본문과 diff해서 지우고, inferred/ambiguous edge는 지우지 않고 분석·제안 층에서 '불확실'로 따로 보여 준다.",
+   "fit": "[추정] 사례 1개(이 표). 링크 행에 출처와 confidence를 달아 출처별 diff로 재계산하는 구조가 옮겨진다. 새로 확인한 god_node_disambiguation은 우리 generic 항목 문제에 직접 닿는다. 불확실 링크가 한 노드로 몰리면 그 개념을 의심하라는 규칙이다. 다만 mindbase는 링크를 지우거나 가중치를 낮추지 않고 알림만 낸다.",
+   "angle": "local-llm-wiki-repos"
+  },
+  {
+   "name": "Ar9av cross-linker skill: 점수 → EXTRACTED/INFERRED/AMBIGUOUS 3단 + 실행 전 git snapshot",
+   "url": "/home/ssafy/workspace/alt/lab-notes/llm-wiki-implementations/lab/repos/Ar9av_obsidian-wiki/.skills/cross-linker/SKILL.md:74-93",
+   "verdict": "partly",
+   "checked_quote": "\"| 3–5 | **INFERRED** | Link is a reasonable inference — shared context, cross-category, peripheral→hub. Apply inline or as Related section. |\" / \"Only act on **EXTRACTED** and **INFERRED** candidates. Include the confidence label in the Cross-Link Report so the user can review INFERRED links before trusting them.\" / crosslinker.ts:69 \"let score = 6; // exact title match (+6 per plan, guarantees EXTRACTED)\"",
+   "correction": "[확인] skill 인용은 원문 그대로다. [확인] INFERRED는 '검토 대기'가 아니다. 파일에 바로 쓴다(4a 본문 링크, 4b ## Related, 4c relationships frontmatter). 검토는 쓴 뒤 보고서에서 한다. [확인] label은 보고서에만 남는다. vault 안의 링크에는 붙지 않는다. README.md:150의 ^[inferred]/^[ambiguous]는 claim 표시이지 cross-linker 링크 표시가 아니다. 그래서 쓴 뒤에는 INFERRED 링크를 골라낼 수 없다. 되돌리기는 run 전체를 snapshot으로 reset하는 것뿐이다. [확인] mindbase crosslinker.ts는 '같은 표를 옮긴 것'이 아니다. 정확한 제목 일치가 없으면 continue로 건너뛴다(:64). 일치하면 점수를 6에서 시작한다(:69). 그래서 모든 제안이 EXTRACTED다. 부분 일치 +1과 INFERRED·AMBIGUOUS 경로는 사실상 없다. 빠진 신호도 있다. 표에 'Mentioned entity/concept +2'가 있다.",
+   "mechanism_summary": "LLM이 registry로 링크 안 된 언급을 찾아 점수를 더하고 3단 label을 붙인다. EXTRACTED와 INFERRED는 파일에 바로 쓰고, AMBIGUOUS는 건너뛴다. label은 보고서에만 남는다. 되돌리기는 쓰기 전 만든 git snapshot SHA로 run 전체를 reset하는 것뿐이다.",
+   "fit": "[추정] 사례 1개(skill. mindbase 코드판은 3단이 실제로 돌지 않아 사례에서 뺐다). '혹시나 하는 링크(INFERRED)도 일단 건다'에는 맞는다. '나중에 지우기 쉽다'에는 맞지 않는다. label이 링크에 붙어 남지 않기 때문이다. 우리 구조로 옮기려면 label을 재계산 값으로 링크마다 붙여야 한다.",
+   "angle": "local-llm-wiki-repos"
+  },
+  {
+   "name": "Ar9av session graph: corpus 적응형 DF 상한 + 상위 k·min_sim kNN edge + query 시점 decay (sidecar)",
+   "url": "/home/ssafy/workspace/alt/lab-notes/llm-wiki-implementations/lab/repos/Ar9av_obsidian-wiki/obsidian_wiki/session_index.py:9-22, 256-272, 322-362",
+   "verdict": "partly",
+   "checked_quote": "\"An adaptive document-frequency ceiling. Any term appearing in more than MAX_DF_RATIO of all sessions is deleted from the vocabulary outright. This is corpus-adaptive, so it catches machine-specific boilerplate (a person's main project name, their favourite framework) that no hand-written stopword list could anticipate.\" / session_graph.py:18 \"Time decay is applied at *query and render time*, never baked into the stored artifacts\" / session_graph.py:79 \"Ninety days demotes old sessions without deleting them.\"",
+   "correction": "[확인] 인용은 원문 그대로다. [확인] decay는 edge가 아니라 session(node)의 최신성에 곱한다. session_query.py:149가 recency = decay(node.get(\"end_ts\"))를 쓰고, _cluster_stats도 cluster recency에 쓴다. 그래서 '낡은 edge는 순위만 내려간다'는 틀렸다. 내려가는 것은 오래된 session이다. [확인] 빠진 점이 있다. MIN_DF = 3이 3개 미만 문서에만 나오는 term도 지운다(\"a term seen in fewer than 3 sessions is a typo or a one-off\"). 문서가 25개 미만이면 상한은 n_docs-1이다. 그래서 모든 문서에 나오는 term만 지워진다. [확인] edge는 매 build에서 kNN으로 새로 만든다. 표시해 두었다가 지우는 '임시 링크' 상태는 없다.",
+   "mechanism_summary": "TF-IDF vector로 문서마다 상위 k=8 이웃(min_sim 0.08 이상, 선택적 mutual)을 고르고 edge마다 weight와 shared_terms를 남긴다. 45%(작은 corpus면 전부)보다 많은 문서에 나오는 term과 3개 미만 문서에 나오는 term은 vocabulary에서 지운다. 결과는 sidecar에 저장하고 매 build마다 새로 계산한다. 시간 decay는 질의 때 session 순위에만 곱한다.",
+   "fit": "[추정] 사례 1개(DF 상한). generic 용어집 항목을 '언급한 chunk 비율'로 링크 계산에서 자동으로 빼는 규칙으로 옮겨진다. MIN_DF는 LLM이 한 번만 넣은 일회성 항목을 꺼 두는 반대쪽 문턱으로 옮겨진다. edge decay 근거로는 쓸 수 없다.",
+   "angle": "local-llm-wiki-repos"
+  },
+  {
+   "name": "nashsu 4-signal relevance: Adamic-Adar(허브 이웃을 1/log(degree)로 깎음) + source overlap 가중 점수",
+   "url": "/home/ssafy/workspace/alt/lab-notes/llm-wiki-implementations/lab/repos/nashsu_llm_wiki/src/lib/graph-relevance.ts:33-38, 308-369",
+   "verdict": "partly",
+   "checked_quote": "`adamicAdar += 1 / Math.log(Math.max(degree, 2))` / `const typeAffinityScore = (affinityMap?.[nodeB.type] ?? 0.5) * WEIGHTS.typeAffinity` / wiki-graph.ts:305-311 \"const edges: GraphEdge[] = dedupedEdges.map((e) => { let weight = 1 ... weight = calculateRelevance(nodeA, nodeB, retrievalGraph)\"",
+   "correction": "[확인] 인용은 원문 그대로다. [확인] 이 점수는 새 링크를 만들지 않는다. wiki-graph.ts가 이미 있는 wikilink edge(dedupedEdges)에 가중치만 붙인다. [확인] getRelatedNodes는 저장소 안에 호출하는 곳이 없다. 그래서 '질의 때 top-N으로 잘린다'는 코드상 쓰이지 않는 경로다. [확인] type affinity의 기본값이 0.5다. 그래서 모든 쌍의 점수가 0보다 크다. 'score > 0' 필터는 사실상 아무것도 거르지 않는다. [확인] Adamic-Adar의 '공통 이웃'은 링크로 이어진 페이지다. 공유 용어가 아니다.",
+   "mechanism_summary": "직접 링크, 공유 source 수, 공통 이웃 페이지의 Adamic-Adar, type 친화도를 가중합해 연속 점수를 낸다. 실제로는 그래프 화면의 기존 edge 굵기와 Louvain 가중치에만 쓰인다. 링크를 지우거나 새로 만들지 않는다.",
+   "fit": "[추정] 사례 1개. '공유 용어마다 1/log(그 용어가 나온 chunk 수)를 더한다'는 우리 쪽 변형은 Adamic-Adar를 term 노드에 적용한 우리 설계다. nashsu가 한 것이 아니다. nashsu에서 가져올 것은 공식 하나다. 효과 측정이나 링크 강등 장치는 없다.",
+   "angle": "local-llm-wiki-repos"
+  },
+  {
+   "name": "inkeep links({kind:'suggest'}): 코드가 제목·alias의 링크 안 된 언급을 후보로만 돌려주고 삽입은 agent가 판단",
+   "url": "/home/ssafy/workspace/alt/lab-notes/llm-wiki-implementations/lab/repos/inkeep_open-knowledge/packages/server/src/mcp/tools/links.ts:20-25",
+   "verdict": "partly",
+   "checked_quote": "\"`backlinks`/`forward`/`suggest` require document. suggest finds unlinked prose mentions; excerpt is normalized context, NOT edit-ready text. Re-read with exec, locate the real text using offset, then edit into a wiki-link.\" / page-identity.ts:217 `const matchLabels = dedupeExact([title, ...aliases]);`",
+   "correction": "[확인] 인용과 탐지 방식은 맞다. 제목과 alias를 긴 것부터 정렬하고 단어 경계로 찾는다. 결과 shape은 { source, excerpt, offset }이다. [확인] 다만 이것은 '혹시나 링크를 걸고 나중에 지운다'의 반대다. 후보는 링크가 아니다. 파일에도 저장되지도 않는다. 수락되기 전까지 링크는 생기지 않는다. 그래서 '임시 링크를 만들고 강등한다'는 기준에는 맞지 않는다.",
+   "mechanism_summary": "서버가 다른 문서의 제목·alias가 링크 없이 언급된 곳을 단어 경계로 찾는다. 찾은 것은 응답 안의 후보 목록으로만 돌려준다. agent가 edit로 wiki-link를 쓸 때만 링크가 생긴다. 받아들이지 않은 후보는 흔적이 남지 않고, 다음 호출에서 다시 계산된다.",
+   "fit": "[추정] 사례 1개. 저장하지 않는 후보 층과 확정 층을 나누는 구조로 옮겨진다. 우리 용어 일치 링크 전체를 후보 층으로 보면 된다. 사람 수락자 대신 점수 문턱이나 LLM 판정이 필요하다.",
+   "angle": "local-llm-wiki-repos"
+  },
+  {
+   "name": "openwiki: 깨진 링크 stamp를 매 run 지우고 다시 찍기 + Claim stale은 자동 retract가 아니라 confirm/update/retract 결정 요구",
+   "url": "/home/ssafy/workspace/alt/lab-notes/llm-wiki-implementations/lab/repos/langchain-ai_openwiki/src/agent/wiki-link-validator.ts:98-157",
+   "verdict": "partly",
+   "checked_quote": "\"Each broken link is preceded by an HTML comment so a later update run can find it inline and repair the href. Existing stamps are cleared first, so a fixed link leaves no residual comment.\" / guidance.ts:19 \"- Treat a stale or unresolved marker as a requirement to recheck current source, not as an instruction to retract the Claim automatically.\"",
+   "correction": "[확인] 인용 두 개는 원문 그대로다. 코드도 stripBrokenLinkStamps → 검증 → stampBrokenLinks 순서다. [확인] 다만 표시 대상은 대상 파일이나 anchor가 없는 링크다. 관련성이 의심스러운 링크가 아니다. 임시로 거는 링크 개념은 없다. stale 재확인 규칙은 링크가 아니라 Claim(문장 단위 주장)에 적용된다.",
+   "mechanism_summary": "worker LLM이 쓴 상대 경로 링크를 코드가 검증한다. 깨진 링크 앞에는 `<!-- openwiki: broken internal link ... -->` 주석을 찍는다. 매 run은 기존 주석을 모두 지우고 다시 찍는다. stale Claim은 다음 run에서 confirm·revise·retract 중 하나를 명시적으로 받아야 한다.",
+   "fit": "[추정] 사례 1개. 의심 표시를 저장 상태가 아니라 매 run 다시 계산하는 값으로 두는 원칙만 옮겨진다. 링크 precision 문제에 직접 닿지는 않는다.",
+   "angle": "local-llm-wiki-repos"
+  },
+  {
+   "name": "atomicstrata: 제목 일치 링크를 compile마다 코드가 재계산 + orphaned 페이지를 title index에서 제외 + append-only relation store의 live-valid 읽기",
+   "url": "/home/ssafy/workspace/alt/lab-notes/llm-wiki-implementations/lab/repos/atomicstrata_llm-wiki-compiler/src/compiler/resolver.ts:1-11, 40-64, 146-174",
+   "verdict": "partly",
+   "checked_quote": "\"Rule-based (not LLM-based) pass that scans wiki pages for concept title mentions and wraps them in [[slug|Title]] wikilinks.\" / live-valid.ts:3-5 \"the LATEST record per id (via the lock-free {@link readRelations}) filtered to those that still satisfy the CURRENT profile\" / resolver.ts:56 `if (meta.title && typeof meta.title === \"string\" && !meta.orphaned) {`",
+   "correction": "[확인] 인용과 orphaned 제외는 원문 그대로다. [확인] 그러나 '재계산'은 본문 치환이다. 한 번 박힌 [[slug|Title]]는 되돌리지 않는다. orphaned 제외는 새 링크만 막는다. relation store가 읽을 때 숨기는 것은 현재 profile에 맞지 않는 relation이다. 관련성이 의심스러운 relation이 아니다. 'just in case'로 건 링크를 표시하거나 강등하는 장치는 없다.",
+   "mechanism_summary": "compile 마지막에 코드가 concept 제목 언급을 단어 경계로 찾아 [[slug|Title]]로 본문을 바꾼다. orphaned 페이지는 title index에서 빠져서 새 링크 대상이 되지 않는다. typed relation은 append-only JSONL에 쌓인다. 읽을 때 id별 최신 record 중 현재 profile을 만족하는 것만 보이고, compactRelations가 죽은 record를 정리한다.",
+   "fit": "[추정] 사례 1개. 쓰기는 append하고 읽을 때 현재 규칙으로 거르는 방식이 옮겨진다. 링크 계산 입력에서 discard·의심 상태 항목을 빼는 필터도 옮겨진다. 본문 치환은 지우기 어려운 쪽의 반면교사다.",
+   "angle": "local-llm-wiki-repos"
+  },
+  {
+   "name": "OKF 명세: 신뢰 점수를 저장하지 않고 객관 신호에서 consumer가 계산 + 깨진 링크를 '아직 안 쓴 지식'으로 허용",
+   "url": "/home/ssafy/workspace/alt/lab-notes/llm-wiki-implementations/lab/repos/GoogleCloudPlatform_knowledge-catalog/okf/SPEC.md:315-320, 458-466",
+   "verdict": "partly",
+   "checked_quote": "\"It does not store a credibility score: a score is subjective, unportable across consumers, and goes stale. Credibility is *inferred* from the signals, the same way trust tiers are (§5.3), not stored.\" / \"Consumers MUST tolerate broken links: a link whose target does not exist in the bundle is not malformed; it may simply represent not-yet-written knowledge.\"",
+   "correction": "[확인] 인용 두 개는 원문 그대로다. [확인] 신뢰 신호(author, usage_count, last_modified)는 concept의 sources 항목에 붙는다. 링크에는 붙지 않는다. 링크는 타입도 점수도 없다. 관계 종류는 주변 문장이 말한다. 임시 링크를 거르거나 강등하는 장치는 없다. 깨진 링크 허용은 대상이 없는 링크 이야기다. 틀린 관련성 이야기가 아니다.",
+   "mechanism_summary": "producer가 타입 없는 표준 markdown 링크를 쓴다. consumer는 깨진 링크를 허용해야 한다. 신뢰도는 source마다 남긴 객관 신호로 consumer가 매번 추론한다. 점수는 저장하지 않는다.",
+   "fit": "[추정] 사례 1개(명세의 거부 이유). confidence를 저장하지 말고 신호(용어 빈도, alias 출처, grow 시각)만 남겨 질의 때 계산하라는 설계 근거로만 쓸 수 있다. 메커니즘을 가져올 것은 없다.",
+   "angle": "local-llm-wiki-repos"
+  },
+  {
+   "name": "rohitg00 LLM Wiki v2 gist: fact마다 confidence + 시간 decay·reinforcement + supersession + forgetting curve('지우지 않고 우선순위만 내림')",
+   "url": "/home/ssafy/workspace/alt/lab-notes/llm-wiki-implementations/lab/sources/rohitg00-llm-wiki-v2-gist/llm-wiki.md:17-21, 37, 77",
+   "verdict": "partly",
+   "checked_quote": "\"Implement a retention curve: facts that were important once but haven't been accessed or reinforced in months should gradually fade. Not deleted, but deprioritized.\" / \"A link that says \"A relates to B\" is less useful than \"A caused B, confirmed by 3 sources, confidence 0.9.\"\"",
+   "correction": "[확인] 인용은 원문 그대로다. [확인] decay·reinforcement·forgetting은 fact(주장)에 대한 처방이다. 링크에 대한 처방이 아니다. 링크 쪽은 'confidence 0.9' 예시 문장 하나뿐이다. 구현이 없는 idea 문서다. '혹시나 링크를 건다'는 말도 없다. lint 절의 \"Orphan pages get linked or flagged\"는 orphan을 이으라는 말이다. 틀린 링크를 지우는 말이 아니다.",
+   "mechanism_summary": "처방만 있다. fact마다 지지 source 수, 최근 확인 시각, 모순 여부로 confidence를 매긴다. 시간이 지나면 감쇠하고, 접근이나 새 확인이 오면 회복한다. 오래 강화되지 않은 fact는 지우지 않고 우선순위만 내린다. 새 주장은 옛 주장을 supersede하고, 옛 것은 stale로 보존한다.",
+   "fit": "[추정] 사례 1개(처방 문서). 링크가 질의나 평가에서 맞았을 때 강화하고, 아니면 서서히 내리는 수명 모형의 아이디어로만 쓸 수 있다. 근거로 인용할 구현은 없다.",
+   "angle": "local-llm-wiki-repos"
+  }
+ ],
+ "critic": [
+  {
+   "name": "Snorkel / data programming: labeling function + LabelModel (Ratner et al., VLDB 2017)",
+   "medium": "paper",
+   "url": "https://arxiv.org/abs/1711.10160",
+   "how_links_are_made": "[확인] 사람이 정확도를 모르는 heuristic을 labeling function(LF)으로 쓴다. LF는 후보마다 label을 내거나 abstain한다. 튜토리얼의 keyword LF는 `any(word in x.text.lower() for word in keywords)`면 label을 내는 단순 문자열 매칭이다. 즉 용어집 항목 하나가 LF 하나와 같은 모양이다.",
+   "how_marked_provisional": "[확인] LF 출력은 label matrix로만 남는다. LabelModel이 LF끼리의 일치·불일치만으로 LF마다 정확도와 상관을 추정한다. 그 가중치로 합친 확률 label(\"probabilistic or confidence-weighted labels\")을 낸다. LFAnalysis가 LF마다 coverage·overlaps·conflicts를 보고한다.",
+   "how_removed_or_demoted": "[확인] 정답 없이 LF 단위로 가중치가 낮아진다. 사람은 LF를 고치거나 빼고 다시 돌린다. 튜토리얼에서 너무 넓은 keyword LF `check`를 정규식 `check.*out`으로 좁혔다. 어떤 LF도 label하지 않은 데이터는 학습 전에 걸러진다.",
+   "quote": "sources will overlap and conflict, and to resolve their conflicts we need to estimate their accuracies and correlation structure, without access to ground truth. / (tutorial) The LabelModel ... estimates the accuracies and correlations of the labeling functions using only their agreements and disagreements",
+   "fit": "[추정] 가장 직접 옮겨진다 — 사례 1개: 튜토리얼의 keyword LF가 우리 용어집 매칭과 같은 구조다. 용어집 항목마다 '이 두 chunk가 링크된다'를 내는 LF로 보면 된다. 항목별 coverage(몇 chunk를 잇는지)와 다른 항목과의 conflict를 계산할 수 있다. PDF·arXiv 같은 generic 항목은 coverage가 극단적으로 높은 LF로 드러난다. 링크를 지우는 대신 항목(LF) 가중치를 내리거나 항목을 빼면 링크가 재계산된다. 옮겨지지 않는 것: Snorkel은 분류 문제(label 공간이 고정)를 전제한다. 링크 여부를 label로 바꾸면 abstain을 어떻게 정의할지가 열려 있다. LabelModel은 LF들이 서로 조건부 독립에 가깝다는 가정이 필요하다. 별칭끼리 강하게 상관된 용어집에서는 이 가정이 깨질 수 있다."
+  },
+  {
+   "name": "Nanopublication retraction (npx:retracts) + Registry invalidated flag",
+   "medium": "product-docs",
+   "url": "https://nanopub.readthedocs.io/en/latest/publishing/retraction.html",
+   "how_links_are_made": "[확인] 주장 하나를 assertion·provenance·pubinfo named graph로 묶은 nanopublication으로 낸다. 서명하고 Trusty URI(내용 해시)로 식별한다.",
+   "how_marked_provisional": "[확인] nanopub 자체에 점수는 없다. 철회 여부만 Registry 목록 항목의 invalidated flag로 표시된다.",
+   "how_removed_or_demoted": "[확인] 원본은 고치거나 지울 수 없다. 같은 키로 서명한 새 nanopub이 `npx:retracts`로 원본을 가리킨다. Registry는 원본을 지우지 않고 invalidated flag만 켠다. 기본 검색에서 철회된 것은 빠진다. 철회 대상이 trust 선언이면 다음 trust 계산에서 그 edge가 빠진다.",
+   "quote": "A nanopublication is persistent, you can never edit nor delete it. You can however retract a nanopublication. This is done by publishing a new nanopublication that states that you retract the original publication. / (ecosystem paper) The Registry does not delete the target — every nanopublication remains resolvable by its hash — but it sets an invalidated flag on the corresponding list entry.",
+   "fit": "[추정] 링크 자체보다 용어집 결정(alias/new)에 맞는다 — 사례 1개: Registry가 flag만 바꾸고 재계산은 따로 돈다. LLM의 alias/new 결정 하나를 출처·시각과 함께 불변 기록으로 남긴다. 틀린 alias는 철회 기록을 덧붙여 끈다. 그러면 링크는 철회되지 않은 결정만으로 재계산된다. 철회 기록이 남으므로 LLM이 같은 alias를 다시 제안할 때 막을 근거가 된다. 옮겨지지 않는 것: 서명·분산 Registry·Trusty URI는 개인 KB에 과하다. '같은 키만 철회 가능' 규칙도 사람 검토가 없는 우리 구조에서는 의미가 없다."
+  },
+  {
+   "name": "Wikidata Mix'n'match: Preliminarily matched → Confirm / Remove",
+   "medium": "product-docs",
+   "url": "https://meta.wikimedia.org/wiki/Mix'n'match/Manual",
+   "how_links_are_made": "[확인] 외부 catalog를 올리면 일부 항목이 Wikidata label과 이름으로 자동 매칭된다. 매뉴얼은 자동 매칭이 비슷한 이름끼리 헷갈린다고 적는다.",
+   "how_marked_provisional": "[확인] 자동 매칭은 'Preliminarily matched'(예전 이름 'Automatically matched') 상태로 따로 모인다. 후보가 여럿이면 첫째만 보인다.",
+   "how_removed_or_demoted": "[확인] 사람이 Confirmed나 Remove를 누른다. Remove하면 항목이 unmatched로 돌아가 다른 item에 다시 매칭될 수 있다. 확정 매칭은 Wikidata를 고친다. Remove는 (현재) Wikidata를 고치지 않는다.",
+   "quote": "the system has guessed one or more possible match for the entry in Wikidata, but a person needs to verify or reject it. ... Remove (red button): Confirm that the proposed entry is incorrect. The entry will then become unmatched and may be matched to another (potentially new) item.",
+   "fit": "[추정] 상태 3단(unmatched / preliminary / confirmed)을 링크 표에 그대로 둘 수 있다 — 사례 1개. 이름 매칭으로 만든 것은 모두 preliminary로 두고, 확정 층과 섞지 않는다. 옮겨지지 않는 것: Mix'n'match는 사람이 Confirm/Remove를 누르는 것이 전제다. 우리는 사람 검토가 없으므로 그 자리를 LLM 판정이나 점수 threshold가 맡아야 한다. Remove 기록이 재제안을 막는지는 매뉴얼에 없다."
+  },
+  {
+   "name": "FamilySearch Family Tree record hints: Not a Match (이유 필수) + Restore",
+   "medium": "product-docs",
+   "url": "https://www.familysearch.org/en/help/helpcenter/article/what-do-i-do-with-record-hints-in-family-tree-that-arent-a-match",
+   "how_links_are_made": "[확인] 시스템이 기록(record)과 가계도 인물 사이 후보를 record hint로 띄운다. 사람이 Attach해야 연결된다.",
+   "how_marked_provisional": "[확인] hint는 attach 전까지 확정 연결과 분리된 목록에 있다. 거절된 hint는 Not a Match 목록으로 옮겨지고 이유와 설명이 붙는다.",
+   "how_removed_or_demoted": "[확인] Not a Match를 누르고 이유를 적는다. 이 거절은 공유 가계도라 다른 사용자가 실수로 attach하는 것도 막는다. 거절은 되돌릴 수 있다. 웹에서는 May Be a Match를 누르면 다시 Possible Duplicates로 돌아간다.",
+   "quote": "If you find a record hint that does not apply to anyone in your tree, dismiss the hint. Dismissing prevents others from attaching the record by mistake.",
+   "fit": "[추정] 거절을 지우지 않고 '부정 링크'로 저장하는 패턴이 옮겨진다 — 사례 1개. (chunk A, chunk B, 항목) 단위 거절 목록을 두면 다음 재계산 때 같은 링크가 되살아나지 않는다. 거절도 되돌릴 수 있게 남긴다. 옮겨지지 않는 것: 이유를 사람이 적는 구조다. LLM이 적게 하면 그 이유의 품질은 검증되지 않는다."
+  },
+  {
+   "name": "Alignment API: Cell measure + Alignment.cut / harden (ontology matching)",
+   "medium": "product-docs",
+   "url": "https://moex.gitlabpages.inria.fr/alignapi/api.html",
+   "how_links_are_made": "[확인] matcher가 두 ontology의 entity 쌍 사이 correspondence(Cell)를 relation과 measure(0~1 float)로 낸다.",
+   "how_marked_provisional": "[확인] 모든 Cell이 confidence measure를 든다. 값이 높을수록 확신이 크다.",
+   "how_removed_or_demoted": "[확인] `Alignment.cut(double)`이 threshold 아래 correspondence를 뺀 alignment를 돌려준다. `Alignment.harden(double)`은 threshold 초과를 최대 confidence로, 나머지를 최소로 바꾼다. 원본 alignment와 잘린 alignment가 따로 존재할 수 있다.",
+   "quote": "the confidence in the assertion that the relation holds between the first and the second entity (the higher the value, the higher the confidence). / harden: an alignment by considering that all correspondences whose strength is strictly greater than the argument is converted to the maximum confidence, the others being set to the minimum",
+   "fit": "[추정] 링크 점수와 'threshold로 자른 view'를 분리하는 API 모양이 옮겨진다 — 사례 1개. 링크는 모두 점수와 함께 두고, 소비자가 cut(t)로 읽는다. threshold를 바꿔도 아무것도 지워지지 않는다. 옮겨지지 않는 것: ontology matching의 measure는 matcher가 이름·구조 유사도로 낸다. 우리 링크는 텍스트 일치라 점수의 출처를 따로 정해야 한다(예: 항목의 DF, LLM 판정)."
+  },
+  {
+   "name": "Detecting Erroneous Identity Links on the Web Using Network Metrics (Raad, Beek, van Harmelen, Pernelle, Saïs, ISWC 2018)",
+   "medium": "paper",
+   "url": "https://research.vu.nl/ws/files/75391299/Raad2018_Chapter_DetectingErroneousIdentityLink.pdf",
+   "how_links_are_made": "[확인] LOD Cloud에서 긁은 약 558M owl:sameAs 링크를 그대로 대상으로 한다. 이미 남들이 만든, 틀린 것이 섞인 링크다.",
+   "how_marked_provisional": "[확인] 링크마다 error degree를 계산한다. sameAs 그래프를 equality set으로 나누고 Louvain으로 community를 찾는다. community 안 링크는 community 밀도와 링크 weight가 낮을수록, community 사이 링크는 두 community 연결이 성길수록 error degree가 높다.",
+   "how_removed_or_demoted": "[확인] 지우지 않고 error degree로 순위를 매긴다. 평가에서 error degree 0.4 이하는 모두 맞았고, 0.8 초과는 31.8%가 다른 대상을 잇고 있었다. 링크를 더하거나 빼도 그 링크가 속한 equality set만 다시 순위를 매기도록 설계했다.",
+   "quote": "an error degree is calculated for each identity link in the graph. The error degree of an owl:sameAs link depends on the density of the community(ies) in which the two terms exist, and whether the identity link is symmetrical or not. It is subsequently used to rank identity links, allowing potentially erroneous links to be identified",
+   "fit": "[추정] 그래프 구조만으로 의심 링크를 매기는 방법이 옮겨진다 — 사례 1개(이 논문의 평가). 우리 chunk 그래프에서 community를 찾으면 generic 항목이 만든 링크는 community 사이를 가로지르는 성긴 edge로 나올 가능성이 있다. 외부 신호 없이 계산되고, 재계산이 국소적이다. 옮겨지지 않는 것: owl:sameAs는 전이적이라 equality set이 자연스럽게 생긴다. 우리 '같은 항목 언급' 링크는 항목마다 clique를 만든다. generic 항목의 clique는 그 자체로 밀집 community가 되어 오히려 error degree가 낮게 나올 수 있다. 항목별 clique를 먼저 가중치로 눌러야 할지는 실험해야 안다."
+  },
+  {
+   "name": "TerminusDB: branch / diff / reset (git-like versioned knowledge graph)",
+   "medium": "product-docs",
+   "url": "https://terminusdb.org/docs/knowledge-graph-version-control/",
+   "how_links_are_made": "[확인] 그래프 변경을 commit으로 쌓는다. 실험적 변경은 branch에서 한다.",
+   "how_marked_provisional": "[확인] 잠정 여부를 개별 triple에 표시하지 않는다. branch(main이 아닌 이름 있는 이력)에 있느냐로 나뉜다.",
+   "how_removed_or_demoted": "[확인] diff가 commit·branch 사이에 들어가고 빠진 triple을 JSON patch로 보여 준다. reset은 branch pointer를 옛 commit으로 옮긴다. 버린 commit도 저장소에 남으므로 reset을 다시 되돌릴 수 있다.",
+   "quote": "You create a branch to try out a schema change, run an experimental migration, or stage a release without disturbing main. ... This is what makes commit-and-rollback safe: rolling back is just moving a branch pointer, never destroying data.",
+   "fit": "[추정] 용어집 성장 run 단위 실험에 맞는다 — 사례 1개: Ar9av git snapshot과 같은 단위다. 'LLM이 이번 문서에서 바꾼 용어집'을 branch로 두고 링크 diff를 본 뒤 합치거나 버린다. 옮겨지지 않는 것: 되돌림 단위가 commit 전체다. 링크 하나·alias 하나를 골라 빼는 데는 맞지 않는다. 우리 링크는 용어집에서 재계산되므로 용어집 파일을 git에 두는 것만으로 대부분 얻을 수 있다. 별도 DB가 필요한지는 의문이다."
+  },
+  {
+   "name": "Learning Webs: 사용으로 링크를 만들고 강화하는 hypertext (Bollen & Heylighen, Principia Cybernetica)",
+   "medium": "blog",
+   "url": "https://pespmc1.vub.ac.be/LEARNWEB.html",
+   "how_links_are_made": "[확인] 사용자 이동 경로가 링크를 만든다. A→B 이동은 A→B 링크를 강화한다(frequency). 반대 방향 B→A도 작은 폭으로 강화된다(symmetry). A→B→C 경로는 A→C 링크를 새로 만들거나 강화한다(transitivity).",
+   "how_marked_provisional": "[확인] 링크마다 weight가 있다. 강한 링크가 먼저 보인다.",
+   "how_removed_or_demoted": "[확인] 이 페이지는 약해지거나 사라지는 규칙을 명시하지 않는다. 강화되지 않은 링크가 순위에서 상대적으로 밀릴 뿐이다.",
+   "quote": "The frequency rule that reinforces a link from document A to document B each time a user moves from A to B. ... The complementary rule of symmetry will moreover reinforce the inverse link from B to A, albeit with a smaller increment.",
+   "fit": "[추정] 사용 신호로 링크를 승격하는 층으로 옮겨진다 — 사례 1개. 질의·검색에서 실제로 함께 쓰인 chunk 쌍의 weight를 올리면, 아무도 안 쓰는 generic 링크는 상대적으로 가라앉는다. 옮겨지지 않는 것: 사용 로그가 쌓여야 한다. 개인 KB는 사용량이 적어 신호가 성길 수 있다. 감쇠 규칙은 이 출처에 없으므로 다른 곳(아래 HeLa-Mem)에서 가져와야 한다."
+  },
+  {
+   "name": "HeLa-Mem: Hebbian Learning and Associative Memory for LLM Agents (arXiv 2604.16839)",
+   "medium": "paper",
+   "url": "https://arxiv.org/html/2604.16839",
+   "how_links_are_made": "[확인] 연속한 대화 turn 사이에 작은 weight의 edge를 먼저 만든다. 이후 weight는 Hebbian 규칙으로 바뀐다.",
+   "how_marked_provisional": "[확인] edge마다 weight가 있다. 갱신식은 감쇠 항과, 검색 때 두 노드가 함께 활성화(같은 retrieval 결과 K_t에 들어감)되면 더하는 항으로 이루어진다.",
+   "how_removed_or_demoted": "[확인] 매 단계 weight가 감쇠한다. 노드는 세 조건(총 edge weight가 δ_prune 아래, 비활성 기간이 δ_age 초과, 최근 접근 없음)을 모두 만족할 때만 지워진다. 강한 연결이 있는 오래된 노드는 남는다. [추정] 논문 HTML에서 읽힌 식은 (1−λ)·w이고 λ=0.995라고 적혀 있다. 그대로 읽으면 감쇠가 매우 강하다. 그래서 표기를 원문에서 다시 확인해야 한다 — 확인하지 못했다.",
+   "quote": "w_{ij}^{(t+1)}=(1−λ)·w_{ij}^{(t)} + η·𝕀(v_i,v_j∈𝒦_t) ... this strict compound criterion ensures that the system selectively removes noise while preserving strong, albeit older, associations.",
+   "fit": "[추정] '일단 약하게 잇고, 쓰이면 강화, 안 쓰이면 감쇠' 구조가 질문에 가장 가깝다 — 사례 1개. 링크 생성 기준을 낮게 두고 초기 weight를 작게 준다. 검색에서 함께 쓰인 쌍만 올린다. 옮겨지지 않는 것: 사용 신호가 필요하다. HeLa-Mem은 대화 에이전트라 retrieval이 매 turn 일어난다. 개인 노트 KB는 질의가 드물어 감쇠가 강화보다 빨리 일어날 수 있다. 우리 링크는 저장하지 않고 재계산하는데, weight는 상태라 별도 저장소가 필요해진다."
+  },
+  {
+   "name": "MusicBrainz edit system: 추가는 auto-edit, 삭제·병합은 destructive라 오래 붙잡음 (반례로서의 비대칭)",
+   "medium": "product-docs",
+   "url": "https://musicbrainz.org/doc/Introduction_to_Voting",
+   "how_links_are_made": "[확인] 편집자가 edit를 낸다. 데이터를 추가하는 edit와 대소문자 같은 작은 변경은 auto-edit로 즉시 적용된다.",
+   "how_marked_provisional": "[확인] 나머지 edit는 open 상태로 대부분 7일 동안 투표를 받는다.",
+   "how_removed_or_demoted": "[확인] 삭제와 병합 대부분은 되돌리기 어렵다는 이유로 'destructive'로 분류된다. 이 edit는 Yes 3표를 받아도 최소 48시간 열려 있다. 즉 추가는 싸고 제거는 비싸게 설계했다.",
+   "quote": "Some edits (most removals and merges) are considered \"destructive\" (meaning they're either impossible or very hard to revert). Because of this, they do not apply immediately even if they get 3 uncontested Yes votes.",
+   "fit": "[추정] 같은 원리(되돌리기 어려운 쪽을 늦춘다)가 우리에게는 반대로 적용된다 — 사례 1개. MusicBrainz에서는 병합이 되돌리기 어려운 작업이다. 우리 용어집에서도 alias 결정은 두 이름을 병합하는 것과 같다. 그래서 alias는 별도 잠정 층에 두고, 링크가 재계산되는 구조 덕에 되돌리기 쉽게 만드는 것이 맞다. 옮겨지지 않는 것: 투표 공동체가 없다. 기간 기반 대기만 따로 가져올 수 있다."
+  }
+ ],
+ "dropped": [
+  {
+   "name": "kfchou lint-mechanical: 없는 페이지를 가리키는 링크를 허용하되 3회 이상 참조되면 missing concept로 승격 보고",
+   "verdict": "refuted",
+   "angle": "local-llm-wiki-repos"
+  }
+ ],
+ "searched": [
+  {
+   "angle": "kg-academic",
+   "searched": "WebSearch: \"NELL never-ending language learning candidate beliefs promoted beliefs knowledge integrator\"; \"Knowledge Vault web-scale probabilistic knowledge fusion paper pdf\"; \"Paulheim 2017 Knowledge graph refinement survey error detection\"; \"Knowledge Graph Identification Pujara probabilistic soft logic\"; \"Trio uncertainty lineage database ULDB delete propagate\"; \"entity resolution reversible merges unmerge incremental\"; \"Whang Garcia-Molina Entity resolution with evolving rules\"; \"DeepDive Incremental knowledge base construction Shin VLDB 2015\"; \"LLM knowledge graph cleaning error detection triples validation arXiv 2024 2025\"; \"Mihalcea Csomai Wikify keyphraseness link probability threshold\". 직접 열어 본 원문(PDF는 pypdf로 텍스트를 뽑아 grep함): carlson-aaai10.pdf (NELL), kv-kdd14.pdf, pujara_iswc13.pdf, VLDB06 ULDB, VLDB15 DeepDive, PVLDB10 Whang R117.pdf, swj1167.pdf (Paulheim preprint), arXiv 2404.15923 (KGValidator), mihalcea.cikm07.pdf, wikidata.org Help:Ranking. 열었지만 후보에서 뺀 것: UKGE (arXiv 1811.10667) — confidence score를 embedding으로 학습할 뿐이고, 링크를 강등하거나 지우는 경로가 없어서 뺐다. 'Can LLMs be Knowledge Graph Curators' (GenAIK 2025) — 내려받았지만 accept/reject 메커니즘 문장을 찾지 못했다. 검색 결과 목록에만 보고 열지 않은 것: OpenCTI issue #18675(reversible merges), Zingg 블로그(incremental ER의 cluster unmerge), resolver tree unmerge 특허, MAKGED 다중 에이전트 error detection(arXiv 2501.15791), SigmaKB. 실패한 접근: WebFetch는 PDF를 바이너리로 받아 읽지 못했다(파일로 저장한 뒤 로컬 변환으로 우회함). 처음 시도한 arXiv 1104.1695는 무관한 물리 논문이었다. vldb2010/papers/R118.pdf는 HTML을 돌려줬다(올바른 경로는 vol3/R117.pdf). umich.edu는 TLS 인증서 검증 오류가 났다(curl -k로 받음). 참고: 스크래치패드를 다른 에이전트와 같이 쓰고 있었다. 그래서 작업 파일을 scratchpad/kgprov_dl, scratchpad/kgprov_tools로 옮겼다."
+  },
+  {
+   "angle": "retraction-logic",
+   "searched": "WebSearch: 'Doyle \"A Truth Maintenance System\" 1979 AI memo pdf'; 'Gupta Mumick Subrahmanian \"Maintaining views incrementally\" DRed counting algorithm pdf'; 'Green Karvounarakis Tannen \"Provenance semirings\" pdf'; 'de Kleer \"An assumption-based TMS\" 1986 labels environments nogood pdf'; 'Motik Nenov Piro Horrocks \"backward/forward algorithm\" incremental update datalog materialisation'; '\"Incremental Update of Datalog Materialisation\" Backward/Forward pdf cs.ox.ac.uk'; 'Soufflé datalog provenance proof trees explain why tuple derived'. Opened and verified quotes in local text: Gupta et al. 1993 PDF (Columbia mirror, pypdf로 텍스트 추출), Green et al. PODS'07 PDF (UC Davis), de Kleer ATMS PDF (dekleer.org), DSpace page for Doyle JTMS (abstract only), arXiv 1711.03987 abstract (Hu/Motik/Horrocks), arXiv 1907.05045 HTML (Soufflé provenance), arXiv 2501.09225 abstract (rollback), differential-dataflow README (raw GitHub), Fowler EventSourcing page. Dead ends / not opened: scispace Doyle PDF (WebFetch가 빈 내용 반환), Doyle 본문 bitstream (13MB 스캔본, 열지 않음), Wikipedia 'Reason maintenance' (JTMS 메커니즘 서술 없음), Motik et al. 2015 B/F 원문 PDF (ORA/AAAI 링크는 찾았으나 열지 않음 — 후속작 Hu et al. 2018 초록으로 대체), Provenance Guided Rollback 본문 (초록만 읽음). Not searched for lack of budget: Materialize/DBSP(Feldera) Z-sets, Kafka log compaction tombstones, Datomic retraction, RDFox product docs on incremental reasoning — 모두 differential dataflow/event sourcing과 같은 메커니즘(부호 있는 가중치, 철회 이벤트)이라 추가 후보로 볼 수 있다."
+  },
+  {
+   "angle": "llm-memory-graphrag",
+   "searched": "찾아본 곳과 결과:\n- Graphiti: GitHub README, graphiti_core/edges.py, graphiti.py의 remove_episode, Zep 논문 arXiv 2501.13956, issue #1728(무효화 범위 버그, 열림). 웹 검색으로 SearchFilters 관련 issue #1645와 mintlify wiki도 봤다. wiki는 직접 열지 않았다.\n- Zep fact rating: 기능 소개 블로그를 열었다. 등급을 매기는 방식의 세부는 없었다. 'February 2026 deprecation wave' 문서도 열었다. fact rating과 minRating은 폐지 예정이다. 대체 수단은 semantic/full-text/graph 검색이고, 문서 표현은 \"rather than an arbitrary rating threshold\"이다. 질의 시점 문턱값 방식을 제품이 버린 사례라서 참고로 적어 둔다.\n- Mem0: 논문 arXiv 2504.19413을 열었다. mem0 저장소를 얕게 클론했다(커밋 b7ad69a). 읽은 코드는 _delete_memory, _upsert_entity, _compute_entity_boosts, storage.py의 history/is_deleted다. 현재 OSS에서는 그래프 메모리(Mem0g) 코드를 찾지 못했다.\n- A-MEM: 논문 arXiv 2502.12110, agiresearch/A-mem의 memory_system.py.\n- Cognee: memify 문서, cognee 저장소 얕은 클론(커밋 0ec7a9f). 읽은 파일은 tasks/memify/cross_connect_entities.py, apply_feedback_weights.py, feedback_weights_constants.py, modules/graph/cognee_graph/CogneeGraph.py(_effective_distance), prepare_edges_for_storage.py(기본 가중치 0.5)다. PR #3505(reconcile_memory, 모순 claim supersede)는 검색 결과에서만 봤다. 열지 않았다.\n- LightRAG: README와 lightrag/lightrag.py의 adelete_by_doc_id, subtract_source_ids 부분.\n- Microsoft GraphRAG: 웹 검색, issue #2590(삭제 무시)을 열었다. issue #2540과 #741은 검색 결과에서만 봤다. 공식 incremental indexing 문서는 열지 않았다.\n- HippoRAG 1(arXiv 2405.14831), HippoRAG 2(arXiv 2502.14802), OSU-NLP-Group/HippoRAG의 config_utils.py와 HippoRAG.py(add_synonymy_edges, delete, 가중치 나눗셈).\n- Generative Agents(arXiv 2304.03442), MemoryOS(arXiv 2506.06326).\n- 열지 않은 것: MemGPT/Letta. 이번 주제인 링크나 엣지의 생성·삭제와 거리가 멀어 보여 열지 않았다. 따라서 후보에서 뺐다.\n덧붙임: 일부 웹 페이지 인용은 WebFetch 요약기를 거쳤다. 해당 출처는 Zep 논문, Mem0 논문, HippoRAG 1·2 논문, Generative Agents, MemoryOS, GraphRAG issue다. 코드 인용(Mem0, Cognee, LightRAG, HippoRAG, A-MEM, Graphiti edges.py)은 원문 파일에서 직접 확인했다."
+  },
+  {
+   "angle": "pkm-wiki-tools",
+   "searched": "열어서 쓴 곳: mediawiki.org Add a link 페이지, arXiv 2105.15110 (HTML판; PDF는 텍스트 추출 실패), Phabricator T429417·T316079·T386867, wikitech Add_Link, meta.wikimedia add-a-link model card (threshold 기본값과 feedback 내용 없음), Wikidata Help:Ranking, obsidian.md/help Backlinks, Obsidian 포럼 46049, GitHub obsidian-virtual-linker README (curl로 원문 확인), obsidian-smart-connections README, TiddlyWiki freelinks readme.tid (curl로 원문 확인), DBpedia Spotlight 논문 PDF (pypdf로 추출), zettelkasten.de backlinks-are-bad-links, zettelkasten 포럼 3317. 막힌 곳: mediawiki.org Add_a_link/Experiment_analysis·Link_recommendation_algorithm (404), tiddlywiki.com freelinks 페이지 2곳 (404), DBpedia Spotlight GitHub wiki User's manual·Web-service (confidence/support 정의가 없어 논문으로 대체), Logseq 포럼 'Automatically link unlinked references' (자동 링크 요청 위주이고 오류 처리 논의가 거의 없어 후보에서 뺌), obsidianstats Auto Keyword Linker (미리보기는 있으나 undo나 강등 기능이 없어 뺌), zettelkasten 포럼 3317 (structural vs associative 링크 구분이라 provisional과 무관해 뺌). 검색했지만 열지 않은 것: Roam·Tana·Semantic MediaWiki (시간 안에 provisional 링크와 맞닿은 1차 자료를 찾지 못함), Wikidata P2241 property talk, Phabricator T380329 (excludedSections, 섹션 단위 제외), research-mwaddlink app.py (threshold 쿼리 파라미터; 검색 결과 요약으로만 봄)."
+  },
+  {
+   "angle": "ir-entity-resolution",
+   "searched": "WebSearch: \"Papadakis meta-blocking block purging edge weighting pruning schemes WEP CNP\" (found the TKDE'13 meta-blocking PDF, Supervised Meta-blocking VLDB'14, Generalized Supervised Meta-blocking arXiv 2204.08801); \"Splink predict threshold_match_probability cluster_pairwise_predictions_at_threshold docs\"; \"Milne Witten link probability wikify keyphraseness threshold anchor text\"; \"scikit-hubness hubness reduction mutual proximity local scaling documentation\". Opened: TKDE'13 meta-blocking PDF (WebFetch could not parse it; text extracted locally with pypdf via uv, quotes taken from the extracted text); arXiv 2204.08801 HTML (Block Purging / Block Filtering / WEP/CEP/WNP/CNP definitions); Milne & Witten CIKM'08 PDF (same local extraction); Elasticsearch MLT query docs; NetworkX adamic_adar_index and resource_allocation_index docs; Splink tutorial 05 Predicting results; spaCy EntityLinker API; dedupe docs 'Making smart comparisons' and API docs (partition threshold: 'Lowering the number will increase recall, raising it will increase precision'). Left out as overlapping with Splink: the dedupe blocking docs do not cover stop-word or too-common-block filtering. Also opened: sbert.net Retrieve & Re-Rank; Neo4j GDS Node Similarity (the WebFetch summary paraphrased the degree-cutoff wording; only the 'share many of the same neighbors' sentence is used as a verbatim quote); scikit-hubness Core Concepts. Not pursued, partly for budget: BLINK / ZESHEL bi-encoder + cross-encoder entity linking papers (covered in pattern by sbert retrieve & rerank and spaCy NIL threshold); the JedAI toolkit repo (Papadakis's implementation of meta-blocking); Lucene BM25 IDF docs (Elasticsearch max_doc_freq stands in for hub-term down-weighting); Reciprocal / mutual kNN graph papers."
+  },
+  {
+   "angle": "local-llm-wiki-repos",
+   "searched": "로컬 파일만 읽었다(WebSearch·WebFetch는 쓰지 않음, 지시가 로컬 폴더였다). 읽은 곳: lab/README.md, reports/00-comparison.md(#6 Link, #7 Lint, #8 stale, D11), 각 repo 보고서의 #6 Link·#8 stale 절. 코드·문서 직접 확인: mindbase(crosslinker.ts, builder.ts, classify-edges.ts, schema.ts, wiki-index.ts, reclassify.ts, executor.ts, analysis.ts), Ar9av(.skills/cross-linker/SKILL.md, client.py, temporal.py, session_graph.py, session_index.py, README의 ^[inferred] 표시), atomicstrata(resolver.ts, orphan.ts, freshness/index.ts, relations/types.ts·store.ts·live-valid.ts), inkeep(suggest-links.ts, mcp/tools/links.ts, link-advisory-policy.ts), openwiki(wiki-link-validator.ts, claims/guidance.ts), nashsu(graph-relevance.ts, enrich-wikilinks.ts), kfchou(lint-mechanical.py), OKF(okf/SPEC.md), sources/의 Karpathy gist, rohitg00 v2 gist, frosk1 비판 댓글. 후보에서 뺀 것과 이유: Karpathy 원 gist(llm-wiki.md:41)는 lint가 'orphan pages, missing cross-references'를 LLM에게 점검시키라는 한 줄뿐이다. 링크에 상태·출처가 없고 잘못 건 링크를 지우는 절차도 없어 '추측 링크를 싸게 지우기'에는 해당하지 않는다. frosk1 댓글은 5번 'invent connections between concepts'로 문제만 짚는다. AgriciDaniel는 claim ledger의 accepted/contested와 계산형 refresh_due stale이 있지만 claim 단위라 링크에는 적용되지 않는다(wikilink는 LLM이 쓰고 lint가 orphan만 계산). Astro-Han은 See Also의 죽은 링크만 지우고 링크 상태가 없다. nashsu enrichWithWikilinks(LLM은 term→target JSON만, 치환은 코드)는 테스트 밖 호출이 없는 죽은 코드라 제외했다. cablate, Ar9av temporal.py(valid_until 지난 페이지를 graph-query에서 제외)는 페이지 단위라 제외했다. 확인한 한계: mindbase confidence_log 표와 confidence 기반 필터는 schema에만 있고 쓰는 코드를 찾지 못했다. nashsu 4-signal 점수는 그래프 화면에만 쓰인다(보고서 #6). 어떤 repo도 실행하지 않았다."
+  }
+ ]
+}

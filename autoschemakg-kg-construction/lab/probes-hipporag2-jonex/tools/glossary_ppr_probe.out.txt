@@ -1,0 +1,10 @@
+chunks 57, glossary entries with >=1 chunk 150, chunk-entry edges 688, damping 0.5, undirected
+dense (A) recall@5: single 0.950 (19/20) · bridge 0.725 (10/20) · all 0.838 (29/40)
+PPR seeds=query-matched entries /df passage_weight 0.01: single 1.000 (20/20) · bridge 0.500 (4/20) · all 0.750 (24/40) · dense fallback 7/40 · top5 overlap with dense 3.33 · questions differing from dense ['s17', 'b01', 'b02', 'b04', 'b06', 'b07', 'b13', 'b15', 'b18']
+PPR seeds=query-matched entries /df passage_weight 0.05: single 1.000 (20/20) · bridge 0.625 (7/20) · all 0.812 (27/40) · dense fallback 7/40 · top5 overlap with dense 3.67 · questions differing from dense ['s17', 'b01', 'b04', 'b06', 'b13']
+PPR seeds=query-matched entries /df passage_weight 0.2: single 0.950 (19/20) · bridge 0.625 (7/20) · all 0.787 (26/40) · dense fallback 7/40 · top5 overlap with dense 4.05 · questions differing from dense ['b01', 'b04', 'b06', 'b13']
+PPR seeds=query-matched entries /df passage_weight 1.0: single 0.950 (19/20) · bridge 0.650 (8/20) · all 0.800 (27/40) · dense fallback 7/40 · top5 overlap with dense 4.22 · questions differing from dense ['b01', 'b04', 'b13']
+PPR seeds=query-matched entries passage_weight 0.01: single 0.900 (18/20) · bridge 0.475 (4/20) · all 0.688 (22/40) · dense fallback 7/40 · top5 overlap with dense 3.15 · questions differing from dense ['s02', 'b01', 'b02', 'b04', 'b06', 'b07', 'b11', 'b13', 'b15', 'b18']
+PPR seeds=query-matched entries passage_weight 0.05: single 1.000 (20/20) · bridge 0.500 (4/20) · all 0.750 (24/40) · dense fallback 7/40 · top5 overlap with dense 3.33 · questions differing from dense ['s17', 'b01', 'b02', 'b04', 'b06', 'b07', 'b13', 'b15', 'b18']
+PPR seeds=query-matched entries passage_weight 0.2: single 1.000 (20/20) · bridge 0.575 (7/20) · all 0.787 (27/40) · dense fallback 7/40 · top5 overlap with dense 3.55 · questions differing from dense ['s17', 'b01', 'b02', 'b04', 'b06', 'b13']
+PPR seeds=query-matched entries passage_weight 1.0: single 1.000 (20/20) · bridge 0.625 (7/20) · all 0.812 (27/40) · dense fallback 7/40 · top5 overlap with dense 3.98 · questions differing from dense ['s17', 'b01', 'b04', 'b06', 'b13']

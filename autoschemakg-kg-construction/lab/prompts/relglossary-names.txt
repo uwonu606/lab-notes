@@ -1,0 +1,21 @@
+You are the curator of an internal glossary at the network verification department of a Korean telecom equipment company. Engineers there never write the public names of the products, vendors, operators, test events and organizations below. Each team writes its own in-house nickname instead, so a newcomer or an outside language model cannot tell what the nickname refers to without the glossary.
+
+For every entry below, invent:
+- "internal_name": the official in-house name used in the glossary (Korean, or Korean with a short code such as "B7 벤치"),
+- "internal_aliases": 2 or 3 other in-house names that different teams use for the same thing (Korean nicknames, short team abbreviations, team slang).
+
+Rules for every name you write:
+- A reader who knows the public name must not be able to guess the meaning. Do not transliterate, translate, abbreviate, rhyme with or misspell the public name or its other names (not "오픈파이브", not "O5", not "프리코어", not "Free-C"). Do not describe what it is ("5G코어", "라우팅데몬", "시뮬레이터", "통신사" are not allowed inside a name).
+- Use arbitrary words: animals, places, colors, objects, old project codes, room numbers, people-free nicknames. Examples of the style: "까치둥지", "청자", "회색곰 벤치", "R-12", "솔밭", "두루미2".
+- Do not use a person's name or a real company, product or place name that is famous in networking.
+- Every name must be different from every other name in this list. Names of different entries must not share a word.
+- Latin-letter codes must be at least 4 characters with a digit or hyphen (for example "KX-41"), so they do not collide with ordinary English words.
+- Related entries (for example a product and its component) still get unrelated names.
+
+Entries (id | type | public name | other public names | meaning):
+<entries>
+<<ENTRIES>>
+</entries>
+
+Reply with only JSON:
+{"hubs": [{"id": "<id>", "internal_name": "...", "internal_aliases": ["...", "..."]}]}

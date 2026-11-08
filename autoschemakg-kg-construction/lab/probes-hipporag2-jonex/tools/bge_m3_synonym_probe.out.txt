@@ -1,0 +1,50 @@
+glossary entries 150, distinct normalized names 284
+same-entry pairs 221, different-entry pairs 39965
+same quantiles {0.0: 0.261, 0.1: 0.377, 0.25: 0.545, 0.5: 0.702, 0.75: 0.804, 0.9: 0.886, 1.0: 0.979}
+diff quantiles {0.0: 0.117, 0.1: 0.31, 0.25: 0.347, 0.5: 0.39, 0.75: 0.438, 0.9: 0.486, 1.0: 0.906}
+threshold 0.6: same>=t 148/221 (0.670), diff>=t 424/39965, precision 0.259
+threshold 0.65: same>=t 132/221 (0.597), diff>=t 204/39965, precision 0.393
+threshold 0.7: same>=t 112/221 (0.507), diff>=t 104/39965, precision 0.519
+threshold 0.75: same>=t 86/221 (0.389), diff>=t 59/39965, precision 0.593
+threshold 0.8: same>=t 57/221 (0.258), diff>=t 28/39965, precision 0.671
+threshold 0.85: same>=t 32/221 (0.145), diff>=t 9/39965, precision 0.780
+threshold 0.9: same>=t 22/221 (0.100), diff>=t 2/39965, precision 0.917
+same-entry pairs where at least one side passes the ASCII>2 gate: 201/221
+same-entry pairs >=0.8 that the official gate would keep: 50/57
+ko-ko: same n=32 median 0.727 share>=0.8 0.312; diff n=2894 share>=0.8 0.0003
+ko-en: same n=99 median 0.678 share>=0.8 0.192; diff n=15840 share>=0.8 0.0003
+en-en: same n=90 median 0.729 share>=0.8 0.311; diff n=21231 share>=0.8 0.0010
+top 15 different-entry pairs:
+  0.906  knowcomp | knowcomp 서베이  entries [34] [35]
+  0.902  ultra fine entity typing | ultra fine typing  entries [77] [75]
+  0.890  squash commit | squash commit body  entries [13] [6]
+  0.881  keyphrase term extraction | term extraction  entries [57] [61]
+  0.878  hearst patterns | hearst patterns revisited  entries [96] [99]
+  0.861  chatgpt | chatgpt 평가  entries [146] [70]
+  0.857  squash 커밋 | squash 커밋의 본문  entries [13] [6]
+  0.854  keyphrase | keyphrase term  entries [58] [57]
+  0.854  concept extraction | 임상 concept extraction  entries [134] [135]
+  0.848  hypernym | hyponym  entries [94] [95]
+  0.847  keyphrase | keyphrase extraction  entries [58] [57]
+  0.843  hearst pattern | hearst patterns revisited  entries [96] [99]
+  0.838  git | github  entries [24] [25]
+  0.837  keyphrase extraction | keyphrases  entries [57] [58]
+  0.833  keyword extraction | term extraction  entries [57] [61]
+lowest 10 same-entry pairs:
+  0.261  course concept extraction in moocs via embedding based graph propagation | pan 2017
+  0.286  canonicalizing open knowledge bases | galárraga 2014
+  0.294  canonicalizing open knowledge bases | galárraga
+  0.313  hearst patterns revisited | roller 2018
+  0.318  metathesaurus | umls
+  0.318  2010 보고서 | i2b2 va challenge
+  0.319  short text conceptualization using a probabilistic knowledgebase | song 2011
+  0.327  context dependent fine grained entity type tagging | gillick
+  0.328  context dependent fine grained entity type tagging | gillick 2014
+  0.334  microsoft concept graph | probase
+hand-picked pairs (not from the glossary):
+  0.736  매출 | 수익
+  0.913  품질팀 | 품질 관리팀
+  0.680  배포 파이프라인 | ci 파이프라인
+  0.742  회의록 | 미팅 노트
+  0.763  2024년 매출 | 2025년 매출
+  0.574  초안 | 최종본

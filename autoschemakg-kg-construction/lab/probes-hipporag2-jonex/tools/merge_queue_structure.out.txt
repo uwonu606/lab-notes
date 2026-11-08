@@ -1,0 +1,23 @@
+chunks fixed1000: 57, base glossary 22-glossary-기존.json (153 entries)
+
+=== queue t>=0.7, human accepts true merges (rebase, amend, ultra-fine typing)
+  mean recall 0.86 · mean precision over targets with hits 0.85 (9 targets)
+  t01 R1.00 P1.00 n7 · t02 R1.00 P1.00 n6 · t03 R1.00 P0.80 n5 · t04 R1.00 P0.76 n17 · t05 R0.00 P0.00 n0 · t06 R1.00 P0.67 n9 · t07 R0.71 P1.00 n5 · t08 R0.88 P0.88 n8 · t09 R1.00 P0.75 n8 · t10 R1.00 P0.75 n8
+
+=== answer-seen upper bound (+UFET)
+  mean recall 0.89 · mean precision over targets with hits 0.82 (9 targets)
+  t01 R1.00 P1.00 n7 · t02 R1.00 P1.00 n6 · t03 R1.00 P0.80 n5 · t04 R1.00 P0.76 n17 · t05 R0.00 P0.00 n0 · t06 R1.00 P0.67 n9 · t07 R1.00 P0.78 n9 · t08 R0.88 P0.88 n8 · t09 R1.00 P0.75 n8 · t10 R1.00 P0.75 n8
+
+=== no merge
+  mean recall 0.63 · mean precision over targets with hits 0.83 (7 targets)
+  t01 R1.00 P1.00 n7 · t02 R0.00 P0.00 n0 · t03 R0.00 P0.00 n0 · t04 R1.00 P0.76 n17 · t05 R0.00 P0.00 n0 · t06 R1.00 P0.67 n9 · t07 R0.43 P1.00 n3 · t08 R0.88 P0.88 n8 · t09 R1.00 P0.75 n8 · t10 R1.00 P0.75 n8
+
+=== conditional dense fallback (embedding 5000 chars only when alias match returns nothing); missing vectors 0
+  [queue t>=0.7, human accepts true merges (rebase, amend, ultra-fine typing)] fallback used for t05: R 0.40 P 0.33 pieces 6
+  [queue t>=0.7, human accepts true merges (rebase, amend, ultra-fine typing)] mean recall 0.90 · mean precision over all 10 0.79
+  [answer-seen upper bound (+UFET)] fallback used for t05: R 0.40 P 0.33 pieces 6
+  [answer-seen upper bound (+UFET)] mean recall 0.93 · mean precision over all 10 0.77
+  [no merge] fallback used for t02: R 0.67 P 0.67 pieces 6
+  [no merge] fallback used for t03: R 0.50 P 0.33 pieces 6
+  [no merge] fallback used for t05: R 0.40 P 0.33 pieces 6
+  [no merge] mean recall 0.79 · mean precision over all 10 0.71

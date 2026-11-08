@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>민수 이야기가 그래프가 되다가 깨지는 과정</title>
+<style>
+  :root { --ink:#1d1d1f; --mute:#6e6e73; --q1:#2f6fdb; --q2:#1f9d6b; --q3:#d9822b; --bad:#d64545; --bg:#fbfaf7; --card:#fff; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif; color:var(--ink); background:var(--bg); line-height:1.5; }
+  main { max-width:980px; margin:0 auto; padding:40px 20px 80px; }
+  h1 { font-size:34px; margin:0 0 6px; }
+  h2 { font-size:26px; margin:64px 0 8px; }
+  .lead { color:var(--mute); font-size:18px; margin:0 0 20px; }
+  .step { display:inline-block; background:var(--ink); color:#fff; border-radius:999px; width:36px; height:36px; text-align:center; line-height:36px; font-weight:700; margin-right:10px; }
+  .row { display:flex; gap:14px; flex-wrap:wrap; }
+  .card { background:var(--card); border-radius:16px; padding:18px; box-shadow:0 1px 3px rgba(0,0,0,.08); flex:1 1 160px; }
+  .big { font-size:52px; line-height:1; }
+  .scene { text-align:center; font-size:16px; }
+  .scene .big { margin-bottom:10px; }
+  .q { border-top:6px solid; }
+  .q1 { border-color:var(--q1); } .q2 { border-color:var(--q2); } .q3 { border-color:var(--q3); }
+  .q h3 { margin:6px 0 4px; font-size:20px; }
+  .ask { font-size:22px; font-weight:700; margin:4px 0 12px; }
+  .ans { font-family:ui-monospace,Menlo,monospace; font-size:14px; background:#f4f3ef; border-radius:8px; padding:8px 10px; margin:6px 0; }
+  .bad { color:var(--bad); font-weight:700; }
+  .note { font-size:15px; color:var(--mute); }
+  .eye { display:flex; align-items:center; gap:12px; font-size:18px; background:#fff3e0; border-radius:12px; padding:14px 18px; margin:16px 0; }
+  .twin { display:grid; grid-template-columns:1fr 80px 1fr; gap:10px; align-items:center; }
+  .dot { background:#fff; border:3px solid var(--ink); border-radius:16px; padding:16px; font-size:18px; text-align:center; }
+  .neq { font-size:56px; color:var(--bad); text-align:center; font-weight:800; }
+  .tags { margin-top:10px; display:flex; flex-wrap:wrap; gap:6px; justify-content:center; }
+  .tag { background:#eef2ff; border-radius:999px; padding:3px 10px; font-size:14px; }
+  .tag.junk { background:#fde8e8; color:var(--bad); }
+  .tag.share { background:#e3f6ec; color:#11683f; font-weight:700; }
+  mark { background:#ffe08a; padding:0 2px; border-radius:3px; }
+  svg text { font-family:inherit; }
+  table { border-collapse:collapse; width:100%; font-size:17px; background:#fff; border-radius:12px; overflow:hidden; }
+  td, th { padding:10px 14px; border-bottom:1px solid #eee; text-align:center; }
+  th:first-child, td:first-child { text-align:left; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>민수 이야기 → 점과 선 → 끊어진 연결</h1>
+<p class="lead">AutoSchemaKG가 이야기 하나를 그래프로 바꾸는 과정이다. Llama 3.1 8B로 실제로 돌린 답(seed 1)을 그대로 보여 준다.</p>
+
+<h2><span class="step">1</span>이야기</h2>
+<div class="row">
+  <div class="card scene"><div class="big">🏠☂️</div>아침에 민수는 우산을 집에 두고 출근했다.</div>
+  <div class="card scene"><div class="big">🌧️</div>점심 무렵 비가 쏟아졌다.</div>
+  <div class="card scene"><div class="big">💦🧍</div>그래서 민수는 퇴근길에 옷이 다 젖었다.</div>
+  <div class="card scene"><div class="big">🏪☂️</div>민수는 편의점에서 우산을 샀다.</div>
+  <div class="card scene" style="outline:3px dashed var(--q3)"><div class="big">📺⛅</div><b>아침에 일기예보를 봐야 한다.</b><div class="note">← 바꾼 문장</div></div>
+</div>
+<div class="eye">🎯 바란 것: 문장 하나 = 점 하나. 그리고 "우산 두고 나감 → 비 → 젖음 → 우산 삼"이 한 줄로 이어지는 것.</div>
+
+<h2><span class="step">2</span>LLM에게 따로따로 세 번 묻는다</h2>
+<p class="lead">세 질문은 서로의 답을 보지 못한다. 각 질문은 이야기만 받는다.</p>
+<div class="row">
+  <div class="card q q1">
+    <div class="big">👤↔️☂️</div>
+    <h3>질문 1</h3>
+    <div class="ask">"누가 무엇과 무슨 사이야?"</div>
+    <div class="note">명사 → 명사</div>
+    <div class="ans">민수 —<span class="bad">뒤리고</span>→ 우산</div>
+    <div class="ans">민수 —<span class="bad">살았다</span>→ 우산</div>
+    <div class="ans">비 —<span class="bad">가자</span>→ 민수</div>
+    <div class="note">관계 말이 뭉개졌다. 집에 둔 우산과 산 우산은 "우산" 점 하나가 됐다.</div>
+  </div>
+  <div class="card q q2">
+    <div class="big">📌👥</div>
+    <h3>질문 2</h3>
+    <div class="ask">"무슨 일이 있었고, 누가 거기 있었어?"</div>
+    <div class="note">사건 문장 + 참여한 명사</div>
+    <div class="ans">민수는 <mark>아침에</mark> 우산을 집에 두고 출근했다. ← 민수, 우산, 집</div>
+    <div class="ans">점심 무렵 비가 쏟아졌다. ← 비</div>
+    <div class="ans">아침에 일기예보를 봐야 한다. ← 일기예보</div>
+    <div class="note">(젖었다·샀다도 나왔다)</div>
+  </div>
+  <div class="card q q3">
+    <div class="big">⏰➡️</div>
+    <h3>질문 3</h3>
+    <div class="ask">"어떤 일이 어떤 일의 원인·순서야?"</div>
+    <div class="note">사건 → 사건</div>
+    <div class="ans">민수는 우산을 집에 두고 출근했다. —after→ <span class="bad">비가 쏟아졌는데</span></div>
+    <div class="ans">비가 쏟아졌다. —because→ 옷이 젖었다.</div>
+    <div class="ans">옷이 젖었다. —as a result of→ 우산을 샀다.</div>
+    <div class="ans">출근했다. —<span class="bad">before</span>→ 아침에 일기예보를 봐야 한다.</div>
+    <div class="note">"봐야 한다"는 일어난 일이 아니라 교훈이다. 그런데 시간 순서 칸에 들어갔다.</div>
+  </div>
+</div>
+
+<h2><span class="step">3</span>점 합치기: 글자가 똑같아야 한 점</h2>
+<p class="lead">코드는 뜻을 보지 않는다. 글자를 한 자씩 비교한다.</p>
+<div class="twin">
+  <div class="dot" style="border-color:var(--q2)">🏠☂️<br>민수는 <mark>아침에</mark> 우산을 집에 두고 출근했다.<div class="note">질문 2가 씀</div></div>
+  <div class="neq">≠</div>
+  <div class="dot" style="border-color:var(--q3)">🏠☂️<br>민수는 우산을 집에 두고 출근했다.<div class="note">질문 3이 씀</div></div>
+</div>
+<div class="eye">💥 같은 아침, 같은 출근인데 점이 두 개가 됐다. "비가 쏟아졌는데"도 "점심 무렵 비가 쏟아졌다."와 다른 점이 됐다.</div>
+
+<svg viewBox="0 0 940 380" width="100%" role="img" aria-label="그래프가 두 섬으로 끊긴 그림">
+  <rect x="10" y="10" width="560" height="360" rx="24" fill="#eef6ff"/>
+  <rect x="600" y="10" width="330" height="360" rx="24" fill="#fff1e6"/>
+  <text x="30" y="45" font-size="18" font-weight="700">섬 A</text>
+  <text x="620" y="45" font-size="18" font-weight="700">섬 B</text>
+  <g stroke="#999" stroke-width="2">
+    <line x1="110" y1="110" x2="290" y2="110"/>
+    <line x1="290" y1="110" x2="290" y2="210"/>
+    <line x1="290" y1="210" x2="460" y2="210"/>
+    <line x1="460" y1="210" x2="460" y2="310"/>
+    <line x1="110" y1="110" x2="110" y2="310"/>
+    <line x1="110" y1="310" x2="460" y2="310"/>
+    <line x1="110" y1="210" x2="290" y2="210"/>
+    <line x1="700" y1="120" x2="840" y2="200"/>
+    <line x1="700" y1="120" x2="700" y2="300"/>
+    <line x1="700" y1="300" x2="850" y2="300"/>
+  </g>
+  <g font-size="15" text-anchor="middle">
+    <circle cx="110" cy="110" r="34" fill="#fff" stroke="#1d1d1f" stroke-width="3"/><text x="110" y="106" font-size="26">🧍</text><text x="110" y="128">민수</text>
+    <circle cx="290" cy="110" r="34" fill="#fff" stroke="#1d1d1f" stroke-width="3"/><text x="290" y="106" font-size="26">☂️</text><text x="290" y="128">우산</text>
+    <circle cx="110" cy="210" r="38" fill="#fff" stroke="#1f9d6b" stroke-width="3"/><text x="110" y="206" font-size="26">🏠☂️</text><text x="110" y="230">아침에 출근</text>
+    <circle cx="290" cy="210" r="34" fill="#fff" stroke="#1f9d6b" stroke-width="3"/><text x="290" y="206" font-size="26">🌧️</text><text x="290" y="228">비 쏟아짐</text>
+    <circle cx="460" cy="210" r="34" fill="#fff" stroke="#1f9d6b" stroke-width="3"/><text x="460" y="206" font-size="26">💦</text><text x="460" y="228">젖음</text>
+    <circle cx="460" cy="310" r="34" fill="#fff" stroke="#1f9d6b" stroke-width="3"/><text x="460" y="306" font-size="26">🏪</text><text x="460" y="328">우산 삼</text>
+    <circle cx="110" cy="310" r="28" fill="#fff" stroke="#1d1d1f" stroke-width="3"/><text x="110" y="316">집·옷…</text>
+    <circle cx="700" cy="120" r="38" fill="#fff" stroke="#d9822b" stroke-width="3"/><text x="700" y="116" font-size="26">🏠☂️</text><text x="700" y="140">출근</text>
+    <circle cx="840" cy="200" r="38" fill="#fff" stroke="#d9822b" stroke-width="3"/><text x="840" y="196" font-size="26">🌧️</text><text x="840" y="220">쏟아졌는데</text>
+    <circle cx="700" cy="300" r="38" fill="#fff" stroke="#d9822b" stroke-width="3"/><text x="700" y="296" font-size="26">📺</text><text x="700" y="320">예보 봐야</text>
+    <circle cx="850" cy="300" r="28" fill="#fff" stroke="#1d1d1f" stroke-width="3"/><text x="850" y="306">일기예보</text>
+  </g>
+  <text x="585" y="200" font-size="40" fill="#d64545" text-anchor="middle">✂️</text>
+</svg>
+<div class="eye">🔍 섬 A의 "아침에 출근"에서 출발하면 "그 뒤에 비가 왔다"에 닿지 못한다. 그 선은 섬 B에만 있다. "왜 젖었나 → 우산을 두고 나가서"를 따라갈 수 없다.</div>
+
+<h2><span class="step">4</span>개념 단계: 점마다 이름표를 붙인다</h2>
+<p class="lead">LLM이 점마다 짧은 이름표를 붙인다. 이름표 글자가 같은 점끼리 같은 개념 점에 이어진다. 점을 합치지는 않는다. 선만 더한다.</p>
+
+<h3 style="font-size:20px;margin-top:28px">💥 깨짐 1 — 같은 출근 두 점이 이름표를 하나도 나눠 갖지 않았다</h3>
+<div class="twin">
+  <div class="dot" style="border-color:var(--q2)">🏠☂️ 아침에 출근
+    <div class="tags"><span class="tag junk">"잘못된 전달이었습니다. event : …forgotten"</span><span class="tag">leaving</span><span class="tag share">commute</span></div></div>
+  <div class="neq">∅</div>
+  <div class="dot" style="border-color:var(--q3)">🏠☂️ 출근
+    <div class="tags"><span class="tag">lost umbrella</span><span class="tag">forgotten umbrella</span><span class="tag">rainy day</span><span class="tag">work trip</span><span class="tag">daily routine</span></div></div>
+</div>
+<p class="note">"forgotten"과 "forgotten umbrella"는 글자가 다르다. 그래서 두 점 사이에 다리가 생기지 않는다.</p>
+
+<h3 style="font-size:20px;margin-top:28px">💥 깨짐 2 — 다른 사건끼리는 이어졌다. 원인 대신 "둘 다 출퇴근"으로</h3>
+<div class="twin">
+  <div class="dot">🏠☂️ 아침에 출근<div class="tags"><span class="tag share">commute</span></div></div>
+  <div class="neq" style="color:#11683f">=</div>
+  <div class="dot">💦 퇴근길에 젖음<div class="tags"><span class="tag share">commute</span></div></div>
+</div>
+<p class="note">우리가 바란 다리는 "우산을 두고 나가서 젖었다"였다. 실제로 생긴 다리는 "둘 다 출퇴근 이야기"다. 개념 선에는 원인도 방향도 없다.</p>
+
+<h3 style="font-size:20px;margin-top:28px">💥 깨짐 3 — 비와 일기예보는 뜻이 이어지는데 이름표가 안 맞았다</h3>
+<div class="twin">
+  <div class="dot">🌧️ 비<div class="tags"><span class="tag">weather</span></div></div>
+  <div class="neq">≠</div>
+  <div class="dot">📺 아침에 일기예보를 봐야 한다<div class="tags"><span class="tag junk">"check the weather⏎forecast check⏎morning routine"</span></div></div>
+</div>
+<p class="note">LLM이 이름표를 쉼표 대신 줄바꿈으로 나눴다. 코드는 쉼표로만 자른다. 그래서 세 이름표가 긴 이름표 하나로 붙었다. "weather"와 같은 글자인 이름표는 생기지 않았다.</p>
+
+<h3 style="font-size:20px;margin-top:28px">💥 깨짐 4 — 이름표 자리에 LLM의 혼잣말이 들어갔다</h3>
+<div class="row">
+  <div class="card"><b>🧍 민수</b><div class="tags"><span class="tag junk">"i can't respond to that request as it appears to be related to a specific person…"</span></div></div>
+  <div class="card"><b>🏪 편의점</b><div class="tags"><span class="tag junk">"ministry of the interior and safety⏎convenience store⏎store…"</span></div></div>
+</div>
+
+<h2><span class="step">5</span>세 번 돌려도 같은가</h2>
+<table>
+  <tr><th></th><th>seed 0</th><th>seed 1</th><th>seed 2</th></tr>
+  <tr><td>🏠☂️ 출근 사건이 점 몇 개로</td><td class="bad">2</td><td class="bad">2</td><td class="bad">2</td></tr>
+  <tr><td>두 출근 점이 나눠 가진 이름표</td><td class="bad">0</td><td class="bad">0</td><td class="bad">0</td></tr>
+  <tr><td>📺 "일기예보를 봐야 한다"는 어디로</td><td>출근과 "at the same time"</td><td>출근 "before"</td><td class="bad">사라짐</td></tr>
+</table>
+
+<div class="eye" style="background:#e9f7ef;margin-top:28px">🧩 한 줄 요약: 세 질문이 같은 일을 다른 글자로 적는다. 글자가 다르면 다른 점이 된다. 개념 이름표도 글자 비교라서 그 틈을 메우지 못한다.</div>
+
+<p class="note" style="margin-top:30px">입력 <code>lab/inputs/07-forecast.md</code> · 세 질문 <code>lab/runs/07-seed*.txt</code> · 개념 <code>lab/runs/07c-seed*.txt</code></p>
+</main>
+</body>
+</html>

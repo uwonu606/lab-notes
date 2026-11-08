@@ -1,0 +1,5 @@
+{'chunks': 57, 'triples': 415, 'head_in': 394, 'tail_in': 297, 'both_in': 290, 'events': 451, 'event_verbatim': 246, 'event_chars': 27433, 'chunks_no_triples': 1}
+both_in ratio 0.6987951807228916
+event verbatim ratio 0.5454545454545454
+avg event chars 60.827050997782706
+avg unique phrases per chunk 12.666666666666666

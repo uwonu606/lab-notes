@@ -1,0 +1,482 @@
+<title>atlas-rag 그림책</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  /* Layout: 한 줄로 흐르는 컨베이어(만들기 5칸 + 답하기 1칸) → 폴더 한 장 → 칸마다 "한 일 / 생긴 파일 / 열어 보면" */
+  :root {
+    --bg: #f5f7fb;
+    --paper: #ffffff;
+    --ink: #17202c;
+    --mute: #5a6475;
+    --line: #dde2ea;
+    --code: #eef1f7;
+    --s1: #2b62c4;
+    --s2: #0e866a;
+    --s3: #a86d0c;
+    --s4: #6a45c4;
+    --s5: #bd3a67;
+    --s6: #4f7516;
+    --warn: #c0392b;
+    --tint: color-mix(in srgb, var(--paper) 88%, var(--ink));
+    --display: "Jua", "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+    --body: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #11161e; --paper: #1a212c; --ink: #e7ebf2; --mute: #9aa4b5; --line: #2c3544; --code: #222b38;
+      --s1: #7ea6f2; --s2: #4fc9a6; --s3: #e0aa4a; --s4: #ab8ef0; --s5: #ec7fa5; --s6: #a3cf5c; --warn: #f07b6e;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #11161e; --paper: #1a212c; --ink: #e7ebf2; --mute: #9aa4b5; --line: #2c3544; --code: #222b38;
+    --s1: #7ea6f2; --s2: #4fc9a6; --s3: #e0aa4a; --s4: #ab8ef0; --s5: #ec7fa5; --s6: #a3cf5c; --warn: #f07b6e;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--body); line-height: 1.6; font-size: 16px; }
+  main { max-width: 1040px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 96px; display: grid; gap: 72px; }
+  h1, h2, h3 { font-family: var(--display); font-weight: 400; text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(34px, 6vw, 52px); line-height: 1.1; }
+  h2 { font-size: clamp(26px, 4vw, 34px); line-height: 1.2; }
+  h3 { font-size: 22px; }
+  p { margin: 0; max-width: 66ch; }
+  .lead { font-size: 19px; color: var(--mute); }
+  section { display: grid; gap: 20px; min-width: 0; }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); }
+  code, .mono { font-family: var(--mono); font-size: .88em; }
+  :focus-visible { outline: 3px solid var(--s1); outline-offset: 2px; }
+
+  /* 컨베이어 */
+  .belt { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+  .tile { background: var(--paper); border: 1px solid var(--line); border-top: 6px solid var(--c); border-radius: 14px; padding: 14px 14px 16px; display: grid; gap: 8px; align-content: start; position: relative; min-width: 0; }
+  .tile .num { font-family: var(--display); font-size: 36px; line-height: 1; color: var(--c); }
+  .tile h3 { font-size: 21px; }
+  .tile p { font-size: 14.5px; color: var(--mute); }
+  .tile .out { font-family: var(--mono); font-size: 12px; color: var(--c); word-break: break-all; }
+  .tile.ask { border-style: dashed; border-top-style: solid; }
+  .belt-labels { display: grid; grid-template-columns: 5fr 1fr; gap: 10px; font-family: var(--display); font-size: 18px; color: var(--mute); }
+  .belt-labels span { border-bottom: 3px solid var(--line); padding-bottom: 4px; }
+  @media (max-width: 860px) {
+    .belt { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .belt-labels { display: none; }
+  }
+
+  /* 폴더 */
+  .tree { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; overflow-x: auto; font-family: var(--mono); font-size: 13.5px; line-height: 1.9; }
+  .tree .row { display: grid; grid-template-columns: 170px 1fr; gap: 14px; white-space: nowrap; }
+  .tree .dir { font-weight: 600; }
+  .tree .files { color: var(--mute); }
+  .dot { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: var(--c); color: var(--paper); font-size: 11px; font-weight: 700; margin-right: 6px; vertical-align: 1px; }
+
+  /* 칸 상세 */
+  .step { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: 24px; display: grid; gap: 18px; border-left: 8px solid var(--c); min-width: 0; }
+  .step-head { display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; }
+  .step-head .num { font-family: var(--display); font-size: 44px; line-height: 1; color: var(--c); }
+  .fn { font-family: var(--mono); font-size: 13px; background: var(--code); border-radius: 6px; padding: 2px 8px; }
+  .picture { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 15px; }
+  .chip { background: var(--tint); border-radius: 10px; padding: 8px 12px; border: 1px solid var(--line); }
+  .chip.c { background: color-mix(in srgb, var(--c) 14%, var(--paper)); border-color: color-mix(in srgb, var(--c) 40%, var(--paper)); }
+  .arrow { color: var(--mute); font-size: 20px; }
+  .cards3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .memo { background: color-mix(in srgb, var(--c) 9%, var(--paper)); border: 1px dashed color-mix(in srgb, var(--c) 50%, var(--paper)); border-radius: 12px; padding: 12px 14px; font-size: 14.5px; display: grid; gap: 4px; min-width: 0; }
+  .memo b { font-family: var(--display); font-weight: 400; font-size: 17px; color: var(--c); }
+  @media (max-width: 760px) { .cards3 { grid-template-columns: 1fr; } }
+
+  .file { display: grid; gap: 6px; min-width: 0; }
+  .fname { font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--c); word-break: break-all; }
+  .fname small { color: var(--mute); font-weight: 400; }
+  pre { margin: 0; background: var(--code); border-radius: 10px; padding: 12px 14px; overflow-x: auto; font-family: var(--mono); font-size: 12.5px; line-height: 1.6; color: var(--ink); }
+  pre .k { color: var(--c); font-weight: 600; }
+  pre .dim { color: var(--mute); }
+  .files2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  @media (max-width: 760px) { .files2 { grid-template-columns: 1fr; } }
+
+  .callout { display: flex; gap: 12px; align-items: flex-start; background: color-mix(in srgb, var(--warn) 9%, var(--paper)); border: 1px solid color-mix(in srgb, var(--warn) 35%, var(--paper)); border-radius: 12px; padding: 12px 16px; font-size: 15px; }
+  .callout .mark { font-family: var(--display); font-size: 22px; color: var(--warn); line-height: 1.2; }
+  .note { font-size: 14px; color: var(--mute); }
+  .term { border-bottom: 1px dotted var(--mute); }
+
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-family: var(--display); font-weight: 400; font-size: 16px; color: var(--mute); }
+  td code { word-break: break-all; }
+  .tablewrap { overflow-x: auto; }
+  .tnum { font-variant-numeric: tabular-nums; }
+
+  /* 그래프 그림 */
+  .graphwrap { overflow-x: auto; background: var(--bg); border-radius: 14px; border: 1px solid var(--line); }
+  .graphwrap svg { display: block; min-width: 640px; width: 100%; height: auto; }
+  svg text { font-family: var(--body); }
+  .g-edge { stroke: var(--mute); stroke-width: 1.6; fill: none; }
+  .g-src { stroke: var(--mute); stroke-width: 1.2; stroke-dasharray: 4 4; fill: none; opacity: .7; }
+  .g-con { stroke: var(--s3); stroke-width: 1.2; fill: none; }
+  .g-lab { font-size: 12px; fill: var(--mute); font-family: var(--mono); }
+  .g-ent { fill: color-mix(in srgb, var(--s1) 18%, var(--paper)); stroke: var(--s1); stroke-width: 2; }
+  .g-evt { fill: color-mix(in srgb, var(--s4) 15%, var(--paper)); stroke: var(--s4); stroke-width: 2; }
+  .g-bad { fill: color-mix(in srgb, var(--warn) 12%, var(--paper)); stroke: var(--warn); stroke-width: 2; stroke-dasharray: 5 3; }
+  .g-cpt { fill: color-mix(in srgb, var(--s3) 16%, var(--paper)); stroke: var(--s3); stroke-width: 1.4; }
+  .g-pas { fill: var(--tint); stroke: var(--mute); stroke-width: 2; }
+  .g-txt { font-size: 14px; fill: var(--ink); }
+  .g-small { font-size: 12px; fill: var(--ink); }
+  .g-warn { font-size: 12px; fill: var(--warn); }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 14px; color: var(--mute); }
+  .legend i { display: inline-block; width: 14px; height: 14px; border-radius: 4px; margin-right: 6px; vertical-align: -2px; border: 2px solid; }
+
+  /* 답하기 */
+  .ways { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .way { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 18px; display: grid; gap: 12px; align-content: start; min-width: 0; }
+  .way h3 { color: var(--s6); }
+  .way .reads { font-size: 13px; color: var(--mute); }
+  .flow { display: grid; gap: 6px; counter-reset: f; padding: 0; margin: 0; list-style: none; }
+  .flow li { counter-increment: f; display: grid; grid-template-columns: 26px 1fr; gap: 8px; font-size: 14.5px; align-items: start; }
+  .flow li::before { content: counter(f); font-family: var(--display); font-size: 15px; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: color-mix(in srgb, var(--s6) 16%, var(--paper)); color: var(--s6); }
+  @media (max-width: 760px) { .ways { grid-template-columns: 1fr; } }
+
+  footer { font-size: 13px; color: var(--mute); display: grid; gap: 4px; border-top: 1px solid var(--line); padding-top: 18px; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<main>
+  <header style="display:grid;gap:14px">
+    <div class="eyebrow">AutoSchemaKG · atlas_rag 패키지</div>
+    <h1>글을 넣으면 지식 지도가 나오고,<br>그 지도로 질문에 답한다</h1>
+    <p class="lead">atlas-rag는 두 가지 일을 한다. 하나는 지도를 만드는 일이다. 다른 하나는 지도를 보고 답할 글을 찾는 일이다. 아래 그림은 민수의 우산 이야기 한 단락이 지도가 되는 과정을 따라간다.</p>
+  </header>
+
+  <section aria-labelledby="belt-h">
+    <h2 id="belt-h">여섯 칸짜리 컨베이어</h2>
+    <div class="belt-labels"><span>만들기: 파일을 남긴다</span><span>답하기: 읽기만 한다</span></div>
+    <div class="belt">
+      <div class="tile" style="--c:var(--s1)"><div class="num">1</div><h3>뽑기</h3><p>LLM이 글을 읽고 메모 카드 세 종류를 쓴다.</p><div class="out">kg_extraction/</div></div>
+      <div class="tile" style="--c:var(--s2)"><div class="num">2</div><h3>표로 옮기기</h3><p>카드를 점 표와 선 표로 옮겨 적는다.</p><div class="out">triples_csv/</div></div>
+      <div class="tile" style="--c:var(--s3)"><div class="num">3</div><h3>꼬리표</h3><p>LLM이 점마다 "사람", "날씨" 같은 꼬리표를 단다.</p><div class="out">concepts/ concept_csv/</div></div>
+      <div class="tile" style="--c:var(--s4)"><div class="num">4</div><h3>지도</h3><p>점과 선과 꼬리표를 한 장에 그린다.</p><div class="out">kg_graphml/</div></div>
+      <div class="tile" style="--c:var(--s5)"><div class="num">5</div><h3>찾아보기 색인</h3><p>뜻이 비슷한 점과 선을 바로 찾게 번호표를 붙인다.</p><div class="out">precompute/</div></div>
+      <div class="tile ask" style="--c:var(--s6)"><div class="num">6</div><h3>답하기</h3><p>질문이 오면 지도를 따라가 근거 글을 고른다.</p><div class="out">파일 없음</div></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="tree-h">
+    <h2 id="tree-h">결과는 폴더 여섯 개에 쌓인다</h2>
+    <p>모든 파일은 설정의 <code>output_directory</code> 아래에 생긴다. 이름 가운데 <code>{이름}</code>은 설정의 <code>filename_pattern</code>이다. 아래 예시에서는 <code>umbrella</code>다.</p>
+    <div class="tree" role="table" aria-label="출력 폴더 구조">
+      <div class="row"><span class="dir">output_directory/</span><span></span></div>
+      <div class="row"><span class="dir">├ kg_extraction/</span><span class="files"><span class="dot" style="--c:var(--s1)">1</span>{모델}_{이름}_output_{시각}_1_in_1.json</span></div>
+      <div class="row"><span class="dir">├ triples_csv/</span><span class="files"><span class="dot" style="--c:var(--s2)">2</span>triple_nodes · triple_edges · text_nodes · text_edges · missing_concepts &nbsp;<span class="dot" style="--c:var(--s3)">3</span>{이름}_from_json_with_concept.csv</span></div>
+      <div class="row"><span class="dir">├ concepts/</span><span class="files"><span class="dot" style="--c:var(--s3)">3</span>concept_shard_0.csv · logging.txt</span></div>
+      <div class="row"><span class="dir">├ concept_csv/</span><span class="files"><span class="dot" style="--c:var(--s3)">3</span>concept_nodes · concept_edges · triple_edges_…_with_concept</span></div>
+      <div class="row"><span class="dir">├ kg_graphml/</span><span class="files"><span class="dot" style="--c:var(--s2)">2</span>{이름}_without_concept.pkl &nbsp;<span class="dot" style="--c:var(--s4)">4</span>{이름}_graph.graphml</span></div>
+      <div class="row"><span class="dir">└ precompute/</span><span class="files"><span class="dot" style="--c:var(--s5)">5</span>…_faiss.index 3개 · …_embeddings.pkl 3개 · 목록 .pkl 4개</span></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="in-h">
+    <h2 id="in-h">넣는 것: 한 줄에 문서 하나</h2>
+    <p>입력은 <code>.json</code>, <code>.jsonl</code>, 또는 그 <code>.gz</code> 파일이다. 문서마다 <code>id</code>, <code>text</code>, <code>metadata</code>를 담는다. 긴 글은 먼저 조각(chunk)으로 잘린다. <code>metadata.lang</code>이 프롬프트 언어를 고른다. 이 값이 없으면 영어로 본다. 지원하지 않는 언어의 문서는 걸러진다.</p>
+    <pre>{<span class="k">"id"</span>: "umbrella", <span class="k">"text"</span>: "아침에 민수는 우산을 집에 두고 출근했다. 점심 무렵 비가 쏟아졌다. 그래서 민수는 퇴근길에 옷이 다 젖었다. 민수는 편의점에서 우산을 샀다. …", <span class="k">"metadata"</span>: {<span class="k">"lang"</span>: "…"}}</pre>
+    <p class="note">예시는 잘리기 전의 원래 문서다. 끝의 "…"은 지면을 아끼려고 줄인 표시다. 이 이야기는 짧아서 조각이 하나뿐이고, 그 조각이 문서 전체와 같다. 문서가 길면 1번 칸 출력 파일과 원문 표에 조각마다 한 줄씩 생긴다.</p>
+  </section>
+
+  <section aria-labelledby="s1-h">
+    <div class="step" style="--c:var(--s1)">
+      <div class="step-head"><span class="num">1</span><h2 id="s1-h">뽑기: 메모 카드 세 종류</h2><span class="fn">run_extraction()</span></div>
+      <p>LLM이 같은 조각을 세 번 읽는다. 읽을 때마다 다른 질문을 받는다.</p>
+      <div class="cards3">
+        <div class="memo"><b>누가 · 어떻게 · 무엇을</b><span>민수 → 갖고/두고 → 우산</span><span class="note">entity_relation</span></div>
+        <div class="memo"><b>사건 · 등장인물</b><span>"민수는 퇴근길에 옷이 다 젖었다." → [민수]</span><span class="note">event_entity</span></div>
+        <div class="memo"><b>사건 · 사건</b><span>"비가 쏟아졌다" → because → "옷이 다 젖었다"</span><span class="note">event_relation</span></div>
+      </div>
+      <div class="file">
+        <div class="fname">kg_extraction/{모델}_{이름}_output_{시각}_1_in_1.json <small>· JSON Lines: 한 줄에 조각 하나</small></div>
+<pre>{
+  <span class="k">"id"</span>: "umbrella",
+  <span class="k">"original_text"</span>: "아침에 민수는 우산을 집에 두고 출근했다. …",
+  <span class="k">"metadata"</span>: {},
+  <span class="k">"entity_relation_dict"</span>: [
+    {"Head": "민수", "Relation": "갖고/두고", "Tail": "우산"},
+    {"Head": "비", "Relation": " 쏟아지다 ", "Tail": "민수"}
+  ],
+  <span class="k">"event_entity_dict"</span>: [
+    {"Event": "민수는 퇴근길에 옷이 다 젖었다.", "Entity": ["민수"]},
+    {"Event": "비가 쏟아졌다.", "Entity": []}
+  ],
+  <span class="k">"event_relation_dict"</span>: [
+    {"Head": "아침에 민수는 우산을 집에 두고 출근했다.", "Relation": "after", "Tail": "점심 무렵 비가 쏟아졌다."},
+    {"Head": "점심 무렵 비가 쏟어졌다.", "Relation": "because", "Tail": "민수는 퇴근길에 옷이 다 젖었다."}
+  ],
+  <span class="dim">"entity_relation_output": "…LLM이 낸 원래 답 문자열…",   ← 공식 실행에는 세 단계마다 붙는다
+  "…_usage": {…}                                         ← record 옵션을 켜면 토큰 사용량</span>
+}</pre>
+      </div>
+      <p class="note">위 예시는 lab/runs/09g-seed1-c0의 실제 파일이다. 이 파일은 09 스크립트가 직접 만들어서 <code>*_output</code> 키가 없다.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s2-h">
+    <div class="step" style="--c:var(--s2)">
+      <div class="step-head"><span class="num">2</span><h2 id="s2-h">표로 옮기기: 점 표, 선 표, 원문 표</h2><span class="fn">convert_json_to_csv()</span></div>
+      <div class="picture">
+        <span class="chip c">카드</span><span class="arrow">→</span>
+        <span class="chip">점 표</span><span class="chip">선 표</span><span class="chip">원문 표</span><span class="chip">원문 연결 표</span><span class="chip">꼬리표 숙제 목록</span>
+      </div>
+      <p>열 이름이 <code>name:ID</code>, <code>:START_ID</code>처럼 생겼다. Neo4j라는 그래프 데이터베이스가 대량으로 읽어 들이는 CSV 형식을 따른 것이다.</p>
+      <div class="files2">
+        <div class="file"><div class="fname">triple_nodes_{이름}_from_json_without_emb.csv <small>· 점</small></div>
+<pre><span class="k">name:ID,type,concepts,synsets,:LABEL</span>
+민수,entity,[],[],Node
+우산,entity,[],[],Node
+점심 무렵 비가 쏟아졌다.,event,[],[],Node
+점심 무렵 비가 쏟어졌다.,event,[],[],Node</pre></div>
+        <div class="file"><div class="fname">triple_edges_{이름}_from_json_without_emb.csv <small>· 선</small></div>
+<pre><span class="k">:START_ID,:END_ID,relation,concepts,synsets,:TYPE</span>
+민수,우산,갖고/두고,[],[],Relation
+아침에 민수는 …,점심 무렵 비가 쏟아졌다.,after,[],[],Relation
+점심 무렵 비가 쏟어졌다.,민수는 퇴근길에 …,because,[],[],Relation</pre></div>
+        <div class="file"><div class="fname">text_nodes_{이름}_from_json.csv <small>· 원문</small></div>
+<pre><span class="k">text_id:ID,original_text,:LABEL</span>
+1cc234a4…3852,"아침에 민수는 우산을 …",Text</pre></div>
+        <div class="file"><div class="fname">text_edges_{이름}_from_json.csv <small>· 점이 나온 원문</small></div>
+<pre><span class="k">:START_ID,:END_ID,:TYPE</span>
+민수,1cc234a4…3852,Source
+우산,1cc234a4…3852,Source</pre></div>
+        <div class="file"><div class="fname">missing_concepts_{이름}_from_json.csv <small>· 3번 칸이 꼬리표를 달 목록</small></div>
+<pre><span class="k">Name,Type</span>
+우산,Entity
+민수는 우산을 샀다.,Event
+갖고/두고,Relation</pre></div>
+        <div class="file"><div class="fname">kg_graphml/{이름}_without_concept.pkl <small>· 꼬리표 전 임시 그래프</small></div>
+<pre><span class="dim">networkx 그래프를 pickle로 저장한 파일이다.
+3번 칸이 꼬리표를 고를 때
+점의 이웃을 문맥으로 꺼내 쓴다.</span></pre></div>
+      </div>
+      <div class="callout"><span class="mark">!</span><span>점의 이름이 곧 점의 ID다. 글자가 같으면 같은 점이 되고, 한 글자라도 다르면 다른 점이 된다. 예시에서 LLM은 같은 사건을 세 번의 질문에서 조금씩 다르게 적었다. "아침에 민수는 우산을 집에 두고 출근했다."와 "민수는 우산을 집에 두고 출근했다."가 그렇다. 한 번은 "쏟아졌다"를 "쏟어졌다"로 잘못 쓰기도 했다. 그래서 사건 점은 9개지만, 가리키는 실제 사건은 5개다.</span></div>
+      <p class="note">원문 ID <code>1cc234a4…</code>는 원문을 SHA-256으로 해시한 64자리 값이다. 해시는 글을 고정 길이 지문으로 바꾸는 계산이다.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s3-h">
+    <div class="step" style="--c:var(--s3)">
+      <div class="step-head"><span class="num">3</span><h2 id="s3-h">꼬리표: 점마다 더 넓은 이름</h2><span class="fn">generate_concept_csv_temp()</span><span class="fn">create_concept_csv()</span></div>
+      <div class="picture">
+        <span class="chip">민수</span><span class="arrow">→</span><span class="chip c">person</span><span class="chip c">man</span><span class="chip c">character</span>
+        <span style="width:24px"></span>
+        <span class="chip">비</span><span class="arrow">→</span><span class="chip c">rain</span><span class="chip c">water</span><span class="chip c">precipitation</span>
+      </div>
+      <p>앞 함수는 LLM에게 꼬리표를 묻는다. 뒤 함수는 답을 합쳐 점 표와 선 표로 다시 쓴다. 점의 꼬리표는 새 점이 된다. 선의 꼬리표는 새 점이 되지 않고, 선 표의 <code>concepts</code> 칸에 들어간다.</p>
+      <div class="files2">
+        <div class="file"><div class="fname">concepts/concept_shard_0.csv <small>· LLM 답 원본 (+ logging.txt)</small></div>
+<pre><span class="k">node,conceptualized_node,node_type</span>
+민수,"민수, person, man, character",entity
+비,"rain, water, precipitation",entity</pre></div>
+        <div class="file"><div class="fname">triples_csv/{이름}_from_json_with_concept.csv <small>· 조각 파일을 합친 것</small></div>
+<pre><span class="dim">형식은 왼쪽과 같다.
+샤드(shard) 파일이 여러 개면 여기서 하나로 합친다.
+샤드는 큰 일을 나눠 돌린 몫이다.</span></pre></div>
+        <div class="file"><div class="fname">concept_csv/concept_nodes_{이름}_from_json_with_concept.csv <small>· 꼬리표 점</small></div>
+<pre><span class="k">"concept_id:ID","name",":LABEL"</span>
+"2d9b668a…911c","shower","Concept"
+"2669545a…08bb","get wet","Concept"</pre></div>
+        <div class="file"><div class="fname">concept_csv/concept_edges_{이름}_from_json_with_concept.csv <small>· 점 → 꼬리표</small></div>
+<pre><span class="k">":START_ID",":END_ID","relation",":TYPE"</span>
+"민수","eeffaecd…28ed","has_concept","Concept"</pre></div>
+        <div class="file" style="grid-column:1/-1"><div class="fname">concept_csv/triple_edges_{이름}_from_json_with_concept.csv <small>· 2번 칸의 선 표에 꼬리표를 채운 판</small></div>
+<pre><span class="k">":START_ID",":END_ID","relation","concepts","synsets",":TYPE"</span>
+"민수","우산","갖고/두고","['carry', 'hold', 'have']","[]","Relation"
+"민수","우산","가져오다","['carry', 'fetch', 'bring', 'get', 'take']","[]","Relation"</pre></div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="s4-h">
+    <div class="step" style="--c:var(--s4)">
+      <div class="step-head"><span class="num">4</span><h2 id="s4-h">지도: 한 장짜리 graphml</h2><span class="fn">convert_to_graphml()</span></div>
+      <div class="graphwrap">
+        <svg viewBox="0 0 760 440" role="img" aria-label="민수 우산 이야기의 지식 그래프 일부">
+          <defs>
+            <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--mute)"/></marker>
+          </defs>
+          <!-- 사건 → 사건 -->
+          <line class="g-edge" x1="170" y1="47" x2="212" y2="47" marker-end="url(#ah)"/>
+          <text class="g-lab" x="191" y="24" text-anchor="middle">after</text>
+          <line class="g-edge" x1="345" y1="117" x2="402" y2="60" marker-end="url(#ah)"/>
+          <text class="g-lab" x="380" y="104">because</text>
+          <line class="g-edge" x1="545" y1="47" x2="597" y2="47" marker-end="url(#ah)"/>
+          <text class="g-lab" x="571" y="24" text-anchor="middle">as a result</text>
+          <!-- 사건 → 등장인물 -->
+          <line class="g-edge" x1="95" y1="134" x2="208" y2="218" marker-end="url(#ah)"/>
+          <line class="g-edge" x1="470" y1="64" x2="256" y2="224" marker-end="url(#ah)"/>
+          <line class="g-edge" x1="672" y1="134" x2="262" y2="236" marker-end="url(#ah)"/>
+          <text class="g-lab" x="20" y="200">is participated by</text>
+          <!-- 등장인물 → 등장인물 -->
+          <line class="g-edge" x1="262" y1="250" x2="388" y2="250" marker-end="url(#ah)"/>
+          <text class="g-lab" x="325" y="242" text-anchor="middle">갖고/두고</text>
+          <path class="g-edge" d="M552,262 Q405,318 262,262" marker-end="url(#ah)"/>
+          <text class="g-lab" x="405" y="312" text-anchor="middle">쏟아지다</text>
+          <!-- 원문 연결 -->
+          <line class="g-src" x1="236" y1="280" x2="340" y2="392"/>
+          <line class="g-src" x1="420" y1="280" x2="395" y2="392"/>
+          <line class="g-src" x1="575" y1="280" x2="450" y2="392"/>
+          <text class="g-lab" x="472" y="372">mention in</text>
+          <!-- 꼬리표 -->
+          <line class="g-con" x1="212" y1="270" x2="140" y2="312"/>
+          <line class="g-con" x1="232" y1="280" x2="225" y2="336"/>
+          <line class="g-con" x1="600" y1="270" x2="645" y2="304"/>
+          <line class="g-con" x1="585" y1="280" x2="610" y2="340"/>
+          <text class="g-lab" x="20" y="300">has_concept</text>
+
+          <rect class="g-evt" x="20" y="30" width="150" height="34" rx="17"/><text class="g-small" x="95" y="52" text-anchor="middle">아침에 … 출근했다</text>
+          <rect class="g-evt" x="215" y="30" width="130" height="34" rx="17"/><text class="g-small" x="280" y="52" text-anchor="middle">비가 쏟아졌다</text>
+          <rect class="g-evt" x="405" y="30" width="140" height="34" rx="17"/><text class="g-small" x="475" y="52" text-anchor="middle">옷이 다 젖었다</text>
+          <rect class="g-evt" x="600" y="30" width="145" height="34" rx="17"/><text class="g-small" x="672" y="52" text-anchor="middle">편의점에서 우산을 샀다</text>
+          <rect class="g-bad" x="20" y="100" width="150" height="34" rx="17"/><text class="g-small" x="95" y="122" text-anchor="middle">우산을 두고 출근했다</text>
+          <rect class="g-bad" x="215" y="100" width="130" height="34" rx="17"/><text class="g-small" x="280" y="122" text-anchor="middle">비가 쏟어졌다</text>
+          <rect class="g-bad" x="600" y="100" width="145" height="34" rx="17"/><text class="g-small" x="672" y="122" text-anchor="middle">우산을 샀다</text>
+          <text class="g-warn" x="600" y="156">빨간 점선 = 위 사건과 같은 일,</text>
+          <text class="g-warn" x="600" y="172">글자가 달라 다른 점</text>
+
+          <circle class="g-ent" cx="232" cy="250" r="30"/><text class="g-txt" x="232" y="255" text-anchor="middle">민수</text>
+          <circle class="g-ent" cx="420" cy="250" r="30"/><text class="g-txt" x="420" y="255" text-anchor="middle">우산</text>
+          <circle class="g-ent" cx="580" cy="250" r="30"/><text class="g-txt" x="580" y="255" text-anchor="middle">비</text>
+
+          <rect class="g-cpt" x="95" y="312" width="80" height="26" rx="8"/><text class="g-small" x="135" y="330" text-anchor="middle">person</text>
+          <rect class="g-cpt" x="180" y="336" width="90" height="26" rx="8"/><text class="g-small" x="225" y="354" text-anchor="middle">character</text>
+          <rect class="g-cpt" x="635" y="304" width="70" height="26" rx="8"/><text class="g-small" x="670" y="322" text-anchor="middle">rain</text>
+          <rect class="g-cpt" x="560" y="340" width="110" height="26" rx="8"/><text class="g-small" x="615" y="358" text-anchor="middle">precipitation</text>
+
+          <rect class="g-pas" x="290" y="392" width="200" height="36" rx="6"/><text class="g-small" x="390" y="415" text-anchor="middle">원문 조각 (passage)</text>
+        </svg>
+      </div>
+      <div class="legend">
+        <span><i style="border-color:var(--s1)"></i>entity 3</span>
+        <span><i style="border-color:var(--s4)"></i>event 9</span>
+        <span><i style="border-color:var(--s3)"></i>concept 36</span>
+        <span><i style="border-color:var(--mute)"></i>passage 1</span>
+        <span class="tnum">점 49개 · 선 72개 (실제 파일 기준, 그림은 일부만)</span>
+      </div>
+      <p>graphml은 그래프를 담는 XML 형식이다. 맨 위 <code>&lt;key&gt;</code>가 속성 이름표를 정의한다. 점과 선은 그 이름표(d0~d5)로 값을 단다. 점의 진짜 ID는 이름의 SHA-256 해시다. 사람이 읽는 이름은 <code>d0</code>에 있다.</p>
+      <div class="files2">
+        <div class="file"><div class="fname">kg_graphml/{이름}_graph.graphml <small>· 점</small></div>
+<pre><span class="k">&lt;key id="d0" for="node" attr.name="id"/&gt;</span>       <span class="dim">사람이 읽는 이름</span>
+<span class="k">&lt;key id="d1" for="node" attr.name="type"/&gt;</span>     <span class="dim">entity·event·concept·passage</span>
+<span class="k">&lt;key id="d2" for="node" attr.name="file_id"/&gt;</span>  <span class="dim">나온 원문 해시</span>
+
+&lt;node id="4611dea0…42bb"&gt;
+  &lt;data key="d0"&gt;민수&lt;/data&gt;
+  &lt;data key="d1"&gt;entity&lt;/data&gt;
+  &lt;data key="d2"&gt;1cc234a4…3852&lt;/data&gt;
+&lt;/node&gt;</pre></div>
+        <div class="file"><div class="fname">kg_graphml/{이름}_graph.graphml <small>· 선</small></div>
+<pre><span class="k">&lt;key id="d3" for="edge" attr.name="relation"/&gt;</span>
+<span class="k">&lt;key id="d4" for="edge" attr.name="type"/&gt;</span>
+<span class="k">&lt;key id="d5" for="edge" attr.name="concepts"/&gt;</span>
+
+&lt;edge source="ead80d8d…" target="103d4064…"&gt;
+  &lt;data key="d3"&gt;because&lt;/data&gt;
+  &lt;data key="d4"&gt;Relation&lt;/data&gt;
+  &lt;data key="d5"&gt;since,due to,thanks to,owing to,because of&lt;/data&gt;
+&lt;/edge&gt;</pre></div>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>선 종류 (d4)</th><th>relation (d3)</th><th>무엇과 무엇을 잇나</th><th class="tnum">예시 개수</th></tr></thead>
+          <tbody>
+            <tr><td>Relation</td><td>LLM이 쓴 글자 그대로 (<code>갖고/두고</code>, <code>because</code>, <code>is participated by</code>)</td><td>점 → 점</td><td class="tnum">9</td></tr>
+            <tr><td>Source</td><td><code>mention in</code></td><td>점 → 그 점이 나온 원문</td><td class="tnum">12</td></tr>
+            <tr><td>Concept</td><td><code>has_concept</code></td><td>점 → 꼬리표</td><td class="tnum">51</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">설정의 <code>include_concept</code>를 끄면 꼬리표 점과 Concept 선이 빠진다. 이때 선 표는 2번 칸의 것을 쓴다.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s5-h">
+    <div class="step" style="--c:var(--s5)">
+      <div class="step-head"><span class="num">5</span><h2 id="s5-h">찾아보기 색인: 뜻으로 찾는 번호표</h2><span class="fn">create_embeddings_and_index()</span></div>
+      <div class="picture">
+        <span class="chip">"민수 갖고/두고 우산"</span><span class="arrow">→</span><span class="chip c">[0.12, −0.40, …]</span><span class="arrow">→</span><span class="chip c">FAISS 색인 3번 칸</span><span class="arrow">→</span><span class="chip">edge_list[3] = (민수, 우산)</span>
+      </div>
+      <p>임베딩 모델이 점 이름, 선 문장("머리 관계 꼬리"), 원문을 숫자 벡터로 바꾼다. FAISS가 그 벡터를 색인에 넣는다. FAISS는 벡터 사이 거리로 가까운 것을 빨리 찾는 라이브러리다. 색인의 i번 칸은 목록 파일의 i번 항목과 짝이다.</p>
+      <div class="tablewrap">
+        <table>
+          <thead><tr><th>파일 (precompute/)</th><th>안에 든 것</th><th>형식</th></tr></thead>
+          <tbody>
+            <tr><td><code>{이름}_event{T|F}_concept{T|F}_{모델}_node_faiss.index</code></td><td>점 벡터 색인</td><td>FAISS 바이너리</td></tr>
+            <tr><td><code>…_edge_faiss.index</code></td><td>선 문장 벡터 색인</td><td>FAISS 바이너리</td></tr>
+            <tr><td><code>{이름}_text_faiss.index</code></td><td>원문 벡터 색인</td><td>FAISS 바이너리</td></tr>
+            <tr><td><code>…_node_embeddings.pkl</code> · <code>…_edge_embeddings.pkl</code> · <code>{이름}_{모델}_text_embeddings.pkl</code></td><td>벡터 목록. 다시 돌릴 때 계산을 건너뛰려고 둔다</td><td>pickle</td></tr>
+            <tr><td><code>…_node_list.pkl</code></td><td>점 ID(해시) 목록</td><td>pickle (list)</td></tr>
+            <tr><td><code>…_edge_list.pkl</code></td><td>(출발 해시, 도착 해시) 목록</td><td>pickle (list of tuple)</td></tr>
+            <tr><td><code>{이름}_text_list.pkl</code></td><td>원문 문자열 목록</td><td>pickle (list)</td></tr>
+            <tr><td><code>{이름}_original_text_dict_with_node_id.pkl</code></td><td>{원문 해시: 원문}</td><td>pickle (dict)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">pickle은 파이썬 객체를 그대로 저장한 파일이다. 파일 이름의 <code>event{T|F}_concept{T|F}</code>는 어떤 점을 색인에 넣었는지 적어 둔 것이다. 둘 다 끄면 entity만, event만 켜면 entity와 event, 둘 다 켜면 꼬리표 점까지 들어간다.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="s6-h">
+    <div class="step" style="--c:var(--s6)">
+      <div class="step-head"><span class="num">6</span><h2 id="s6-h">답하기: 지도에서 근거 찾기</h2><span class="fn">retriever.retrieve(질문)</span></div>
+      <p>5번 칸이 돌려준 그래프와 색인을 읽는다. 새 파일은 만들지 않는다. 찾은 글이나 길을 LLM에게 넘기면 LLM이 답을 쓴다. 찾는 방법은 네 가지다.</p>
+      <div class="ways">
+        <div class="way">
+          <h3>HippoRAG2</h3>
+          <p>지도 위에 물감을 떨어뜨려 번지게 한다.</p>
+          <ol class="flow">
+            <li>질문과 비슷한 선 문장을 선 색인에서 고른다.</li>
+            <li>LLM이 쓸모없는 선을 걸러 낸다.</li>
+            <li>남은 선의 점과, 질문과 비슷한 원문에 물감을 떨어뜨린다.</li>
+            <li><span class="term">personalized PageRank</span>로 물감을 선을 따라 번지게 한다.</li>
+            <li>물감이 많이 고인 원문 조각 상위 N개를 돌려준다.</li>
+          </ol>
+          <p class="note">personalized PageRank는 정해 둔 출발점에서 그래프를 무작위로 걷게 하는 계산이다. 자주 들르는 곳일수록 점수가 높다. 남은 선이 하나도 없으면 원문 유사도만으로 고른다.</p>
+          <div class="reads">읽는 것: graphml, 점·선·원문 색인과 목록</div>
+        </div>
+        <div class="way">
+          <h3>ToG (Think-on-Graph)</h3>
+          <p>지도 위를 걸으며 길을 고른다.</p>
+          <ol class="flow">
+            <li>질문과 비슷한 점 몇 개에서 출발한다.</li>
+            <li>이웃 점으로 한 걸음씩 길을 늘린다.</li>
+            <li>LLM이 가망 있는 길만 남긴다.</li>
+            <li>LLM이 "답할 만큼 모였나"를 판단한다.</li>
+            <li>모였거나 최대 깊이(Dmax)에 닿으면 길을 근거로 답한다.</li>
+          </ol>
+          <div class="reads">읽는 것: graphml, 점·선 색인과 목록</div>
+        </div>
+        <div class="way">
+          <h3>Simple</h3>
+          <p>지도를 걷지 않고 색인만 본다.</p>
+          <ol class="flow">
+            <li><code>SimpleTextRetriever</code>: 원문 색인에서 가까운 원문 N개를 고른다.</li>
+            <li><code>SimpleGraphRetriever</code>: 선 색인에서 가까운 선 N개를 고른다.</li>
+          </ol>
+          <div class="reads">읽는 것: 원문 또는 선 색인과 목록</div>
+        </div>
+        <div class="way">
+          <h3>큰 그래프 (Neo4j)</h3>
+          <p>점이 수억 개면 메모리에 올릴 수 없다. 그래서 그래프를 Neo4j에 두고 질의한다.</p>
+          <ol class="flow">
+            <li><code>add_numeric_id()</code>가 점·선·원문 표에 숫자 ID 열을 붙인 <code>…_with_numeric_id.csv</code>를 만든다.</li>
+            <li><code>compute_kg_embedding()</code>이 벡터 열을 붙인 <code>…_with_emb.csv</code>를 만든다.</li>
+            <li>이 CSV를 Neo4j에 싣는다. 2번 칸의 열 이름 형식이 여기서 쓰인다.</li>
+            <li><code>LargeKGRetriever</code>나 <code>LargeKGToGRetriever</code>가 Neo4j에서 찾는다.</li>
+          </ol>
+          <div class="reads">읽는 것: Neo4j 데이터베이스</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>근거 코드: HKUST-KnowComp/AutoSchemaKG main d0a1666 (2026-01-14). 파일 경로는 atlas_rag/kg_construction/triple_extraction.py와 atlas_rag/vectorstore/create_graph_index.py에서 확인했다.</span>
+    <span>예시 파일: lab/runs/09g-seed1-c0 (민수 우산 이야기, 꼬리표 포함 실행). 해시는 앞뒤 몇 자리만 보였다.</span>
+    <span>확인하지 않은 것: 큰 그래프 경로의 실제 출력 파일, precompute 파일 실물(예시 실행에서는 5번 칸을 돌리지 않았다).</span>
+  </footer>
+</main>

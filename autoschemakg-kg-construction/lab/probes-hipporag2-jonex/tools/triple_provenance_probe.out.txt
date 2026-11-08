@@ -1,0 +1,9 @@
+chunks 57
+triples 414 names 828
+name verbatim in chunk (casefold, ws-normalized): 691 0.835
+triple with both ends verbatim: 291 0.703
+names containing hangul: 190 0.229
+names passing HippoRAG.py:1333 ascii>2 (after text_processing): 669 0.808
+unique normalized names 603
+chunk hangul share of letters: median 0.288 min 0.057 max 0.823
+korean-heavy chunks (>=0.5 hangul): 8 triples 68 both verbatim 57 0.838 hangul names 62 / 136 0.456

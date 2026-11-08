@@ -1,0 +1,3 @@
+new chunks 5 old 52
+pairs sharing an entry with a common surface form 57
+pairs linked only through different surface forms of one entry 0
