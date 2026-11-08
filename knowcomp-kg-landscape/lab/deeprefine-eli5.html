@@ -1,0 +1,528 @@
+<title>DeepRefine 그림책</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  /* Layout: 두 그림 비교 → 부품 → 세로 흐름도 한 장 → 손 세 개 → 우산 이야기 네 칸 → 숫자 → 사람 문 */
+  :root {
+    --bg: #f3f5f8;
+    --paper: #ffffff;
+    --ink: #1a2230;
+    --mute: #5b6577;
+    --line: #d9dfe8;
+    --graph: #2f5fb3;
+    --fail: #c4462f;
+    --patch: #b8760a;
+    --ok: #1f8a5b;
+    --tint: color-mix(in srgb, var(--paper) 90%, var(--graph));
+    --patch-tint: color-mix(in srgb, var(--paper) 86%, var(--patch));
+    --fail-tint: color-mix(in srgb, var(--paper) 88%, var(--fail));
+    --display: "Jua", "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+    --body: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #10151d; --paper: #19202b; --ink: #e6eaf1; --mute: #9aa3b3; --line: #2b3442;
+      --graph: #7ea3ea; --fail: #ee7c68; --patch: #f0b44a; --ok: #5fcf9b;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #10151d; --paper: #19202b; --ink: #e6eaf1; --mute: #9aa3b3; --line: #2b3442;
+    --graph: #7ea3ea; --fail: #ee7c68; --patch: #f0b44a; --ok: #5fcf9b;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--body); line-height: 1.6; font-size: 16px; }
+  main { max-width: 1000px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 96px; display: grid; gap: 80px; }
+  h1, h2, h3 { font-family: var(--display); font-weight: 400; text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(36px, 7vw, 58px); line-height: 1.08; }
+  h2 { font-size: clamp(26px, 4.4vw, 36px); line-height: 1.2; }
+  h3 { font-size: 22px; line-height: 1.3; }
+  p { margin: 0; max-width: 64ch; }
+  .lead { font-size: 20px; color: var(--mute); }
+  section { display: grid; gap: 22px; min-width: 0; }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); }
+  code, .mono { font-family: var(--mono); font-size: .86em; }
+  .note { font-size: 14px; color: var(--mute); }
+  .tag { display: inline-block; font-family: var(--mono); font-size: 11.5px; letter-spacing: .04em; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--mute); }
+
+  .define { display: flex; gap: 14px; align-items: center; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px; max-width: 640px; }
+  .define svg { flex: none; }
+  .define p { font-size: 15.5px; }
+
+  /* SVG 공통 */
+  svg text { font-family: var(--body); }
+  .t { fill: var(--ink); }
+  .tm { fill: var(--mute); }
+  .tb { font-family: var(--display); }
+  .n { fill: var(--paper); stroke: var(--graph); stroke-width: 2.5; }
+  .nf { fill: var(--graph); }
+  .e { stroke: var(--graph); stroke-width: 2; opacity: .55; fill: none; }
+  .box { fill: var(--paper); stroke: var(--line); stroke-width: 2; }
+  .box-fail { fill: var(--fail-tint); stroke: var(--fail); stroke-width: 2; }
+  .box-patch { fill: var(--patch-tint); stroke: var(--patch); stroke-width: 2; }
+  .box-ok { fill: var(--paper); stroke: var(--ok); stroke-width: 2.5; }
+  .box-graph { fill: var(--tint); stroke: var(--graph); stroke-width: 2; }
+  .ar { stroke: var(--mute); stroke-width: 2.2; fill: none; }
+  .ar-ok { stroke: var(--ok); stroke-width: 2.4; fill: none; }
+  .ar-fail { stroke: var(--fail); stroke-width: 2.4; fill: none; }
+  .ar-loop { stroke: var(--graph); stroke-width: 2.2; fill: none; stroke-dasharray: 6 5; }
+  .c-ok { fill: var(--ok); } .c-fail { fill: var(--fail); } .c-patch { fill: var(--patch); } .c-graph { fill: var(--graph); } .c-mute { fill: var(--mute); }
+  .s-patch { stroke: var(--patch); } .s-fail { stroke: var(--fail); }
+
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* 1. 비교 */
+  .duo { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .panel { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: 18px; display: grid; gap: 10px; min-width: 0; }
+  .panel svg { width: 100%; height: auto; }
+  .panel h3 { font-size: 21px; }
+  .panel.pick { border: 2px solid var(--patch); }
+  .panel .cost { font-family: var(--display); font-size: 18px; }
+
+  /* 2. 부품 */
+  .parts { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+  .part { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 16px 14px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+  .part svg { width: 56px; height: 56px; }
+  .part h3 { font-size: 20px; }
+  .part p { font-size: 14px; color: var(--mute); }
+  .part.train { border-style: dashed; }
+
+  /* 3. 흐름도 */
+  .flow { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 18px; }
+  .flow svg { display: block; width: 100%; min-width: 560px; height: auto; }
+
+  /* 4. 손 셋 */
+  .hands { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  .hand { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: grid; gap: 10px; min-width: 0; }
+  .hand svg { width: 100%; height: auto; }
+  .hand p { font-size: 14.5px; color: var(--mute); }
+  .hand code { color: var(--patch); }
+
+  /* 5. 우산 */
+  .story { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .frame { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+  .frame .step { font-family: var(--display); font-size: 30px; line-height: 1; color: var(--mute); }
+  .frame h3 { font-size: 19px; }
+  .frame svg { width: 100%; height: auto; }
+  .frame p { font-size: 14px; color: var(--mute); }
+  .frame code { font-size: 12px; color: var(--patch); word-break: break-all; }
+  .frame.fail { border-color: var(--fail); }
+  .frame.fix { border-color: var(--patch); }
+  .q { font-family: var(--display); font-size: 17px; background: var(--tint); border-radius: 12px; padding: 8px 12px; }
+
+  /* 6. 숫자 */
+  .bars { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: 20px; display: grid; gap: 18px; }
+  .row { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 12px; align-items: center; }
+  .row .lab { font-family: var(--display); font-size: 18px; }
+  .track { display: grid; gap: 6px; position: relative; }
+  .bar { height: 22px; border-radius: 6px; display: flex; align-items: center; justify-content: flex-end; padding-inline: 8px; font-family: var(--mono); font-size: 12.5px; font-variant-numeric: tabular-nums; color: var(--paper); font-weight: 600; }
+  .bar.draft { background: var(--mute); }
+  .bar.fixed { background: var(--patch); }
+  .axis { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 12px; }
+  .ticks { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 11.5px; color: var(--mute); font-variant-numeric: tabular-nums; border-top: 1px solid var(--line); padding-top: 4px; }
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; color: var(--mute); }
+  .legend i { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px; margin-right: 6px; }
+
+  /* 7. 사람 문 */
+  .gate { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 18px; }
+  .gate svg { display: block; width: 100%; min-width: 620px; height: auto; }
+  .grades { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+  .grade { border-radius: 14px; padding: 12px 14px; border: 2px solid var(--line); background: var(--paper); display: grid; gap: 4px; min-width: 0; }
+  .grade b { font-family: var(--display); font-weight: 400; font-size: 20px; }
+  .grade span { font-size: 14px; color: var(--mute); }
+  .grade.hi { border-color: var(--ok); } .grade.mid { border-color: var(--patch); } .grade.lo { border-color: var(--fail); }
+
+  /* 8. 모르는 것 */
+  .unknown { display: grid; gap: 10px; padding: 0; margin: 0; list-style: none; }
+  .unknown li { background: var(--paper); border: 1px solid var(--line); border-left: 5px solid var(--mute); border-radius: 10px; padding: 12px 16px; max-width: 760px; }
+  .src { font-family: var(--mono); font-size: 12px; color: var(--mute); display: grid; gap: 4px; word-break: break-all; }
+
+  @media (max-width: 860px) {
+    .parts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .story { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 620px) {
+    .duo, .hands, .grades { grid-template-columns: 1fr; }
+    .story { grid-template-columns: 1fr; }
+    .row, .axis { grid-template-columns: 80px minmax(0, 1fr); }
+  }
+  :focus-visible { outline: 3px solid var(--graph); outline-offset: 2px; }
+</style>
+
+<main>
+  <header style="display:grid;gap:18px">
+    <span class="eyebrow">HKUST KnowComp · DeepRefine · 2026</span>
+    <h1>막힌 곳만 고치는 그래프</h1>
+    <p class="lead">그래프를 처음부터 완벽하게 짓지 않는다.<br>질문에 답하지 못한 자리만 찾아서 고친다.</p>
+    <div class="define">
+      <svg width="64" height="44" viewBox="0 0 64 44" aria-hidden="true">
+        <line class="e" x1="12" y1="12" x2="50" y2="10"/><line class="e" x1="12" y1="12" x2="30" y2="34"/><line class="e" x1="50" y1="10" x2="30" y2="34"/>
+        <circle class="n" cx="12" cy="12" r="7"/><circle class="n" cx="50" cy="10" r="7"/><circle class="n" cx="30" cy="34" r="7"/>
+      </svg>
+      <p><b>지식 그래프</b>는 사실을 <b>점</b>(사람·물건·일)과 <b>선</b>(관계)으로 적은 지도다.<br>예: <span class="mono">민수 —샀다→ 우산</span></p>
+    </div>
+  </header>
+
+  <!-- 1 -->
+  <section>
+    <h2>다 고치기 대신, 막힌 곳만</h2>
+    <div class="duo">
+      <div class="panel">
+        <h3>미리 전부 손보기</h3>
+        <svg id="g-all" viewBox="0 0 300 210" role="img" aria-label="그래프 전체의 점에 모두 고치기 표시가 붙은 그림"></svg>
+        <span class="cost c-mute" style="color:var(--mute)">점 전부를 본다</span>
+      </div>
+      <div class="panel pick">
+        <h3>막힌 곳만 고치기</h3>
+        <svg id="g-one" viewBox="0 0 300 210" role="img" aria-label="질문 하나가 닿은 작은 조각만 고치기 표시가 붙은 그림"></svg>
+        <span class="cost" style="color:var(--patch)">질문이 막힌 조각만 본다</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section>
+    <h2>부품은 다섯 개</h2>
+    <div class="parts">
+      <div class="part">
+        <svg viewBox="0 0 56 56" aria-hidden="true"><line class="e" x1="14" y1="16" x2="42" y2="14"/><line class="e" x1="14" y1="16" x2="22" y2="42"/><line class="e" x1="42" y1="14" x2="40" y2="40"/><circle class="n" cx="14" cy="16" r="6"/><circle class="n" cx="42" cy="14" r="6"/><circle class="n" cx="22" cy="42" r="6"/><circle class="n" cx="40" cy="40" r="6"/></svg>
+        <h3>초안 그래프</h3>
+        <p>작은 모델(Qwen2.5-3B)이 atlas-rag로 빨리 짓는다. 개념 이름표는 끈다.</p>
+      </div>
+      <div class="part">
+        <svg viewBox="0 0 56 56" aria-hidden="true"><circle cx="24" cy="24" r="13" fill="none" stroke="var(--graph)" stroke-width="4"/><line x1="34" y1="34" x2="48" y2="48" stroke="var(--graph)" stroke-width="5" stroke-linecap="round"/></svg>
+        <h3>찾기 색인</h3>
+        <p>질문과 가까운 점·선을 꺼내 준다(FAISS). 고치면 같이 바뀐다.</p>
+      </div>
+      <div class="part">
+        <svg viewBox="0 0 56 56" aria-hidden="true"><rect x="8" y="12" width="40" height="30" rx="8" fill="var(--patch-tint)" stroke="var(--patch)" stroke-width="3"/><circle cx="21" cy="27" r="3.5" class="c-patch"/><circle cx="35" cy="27" r="3.5" class="c-patch"/><line x1="28" y1="4" x2="28" y2="12" stroke="var(--patch)" stroke-width="3"/></svg>
+        <h3>고치개 LLM</h3>
+        <p>판정 → 원인 찾기 → 고치기를 한 대화에서 한다(Qwen3-8B, 학습함).</p>
+      </div>
+      <div class="part">
+        <svg viewBox="0 0 56 56" aria-hidden="true"><path d="M14 6h20l10 10v34H14z" fill="var(--paper)" stroke="var(--mute)" stroke-width="3"/><line x1="20" y1="24" x2="38" y2="24" stroke="var(--mute)" stroke-width="2.5"/><line x1="20" y1="31" x2="38" y2="31" stroke="var(--mute)" stroke-width="2.5"/><line x1="20" y1="38" x2="32" y2="38" stroke="var(--mute)" stroke-width="2.5"/></svg>
+        <h3>원문</h3>
+        <p>고칠 때 근거로 함께 보는 문서 조각.</p>
+      </div>
+      <div class="part train">
+        <svg viewBox="0 0 56 56" aria-hidden="true"><rect x="10" y="30" width="10" height="18" rx="2" class="c-mute"/><rect x="26" y="16" width="10" height="32" rx="2" class="c-patch"/><path d="M8 14 L22 8 L36 12 L48 4" fill="none" stroke="var(--ok)" stroke-width="3"/></svg>
+        <h3>채점관 <span class="tag">학습 때만</span></h3>
+        <p>상 = 고친 뒤 정답 점수 − 고치기 전 점수.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section>
+    <h2>질문 하나가 지나가는 길</h2>
+    <div class="flow scroll">
+      <svg viewBox="0 0 680 880" role="img" aria-label="질문, 조각 꺼내기, 답할 수 있나 판정, 넓히기 최대 세 번, 원인 찾기, 고치기, 그래프 갱신으로 이어지는 흐름도">
+        <defs>
+          <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" class="c-mute"/></marker>
+          <marker id="ah-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" class="c-ok"/></marker>
+          <marker id="ah-fail" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" class="c-fail"/></marker>
+          <marker id="ah-loop" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" class="c-graph"/></marker>
+        </defs>
+
+        <!-- 다음 질문 루프 (가장 바깥) -->
+        <path class="ar-loop" d="M170 815 H40 V40 H162" marker-end="url(#ah-loop)"/>
+        <text x="28" y="430" class="c-graph tb" font-size="17" transform="rotate(-90 28 430)" text-anchor="middle">다음 질문은 고친 그래프에서</text>
+
+        <!-- A 질문 -->
+        <rect class="box-graph" x="170" y="12" width="280" height="56" rx="14"/>
+        <text x="310" y="47" class="t tb" font-size="22" text-anchor="middle">질문이 들어온다</text>
+        <path class="ar" d="M310 68 V100" marker-end="url(#ah)"/>
+
+        <!-- B 조각 -->
+        <rect class="box" x="170" y="104" width="280" height="66" rx="14"/>
+        <text x="310" y="133" class="t tb" font-size="20" text-anchor="middle">가까운 조각을 꺼낸다</text>
+        <text x="310" y="157" class="tm" font-size="14" text-anchor="middle">선 10개</text>
+        <path class="ar" d="M310 170 V196" marker-end="url(#ah)"/>
+
+        <!-- C 판정 -->
+        <polygon class="box" points="310,200 450,258 310,316 170,258"/>
+        <text x="310" y="252" class="t tb" font-size="19" text-anchor="middle">이 조각으로</text>
+        <text x="310" y="276" class="t tb" font-size="19" text-anchor="middle">답할 수 있나?</text>
+
+        <!-- 예 → D -->
+        <path class="ar-ok" d="M450 258 H500" marker-end="url(#ah-ok)"/>
+        <text x="474" y="248" class="c-ok tb" font-size="17" text-anchor="middle">예</text>
+        <rect class="box-ok" x="504" y="222" width="160" height="72" rx="14"/>
+        <text x="584" y="252" class="t tb" font-size="20" text-anchor="middle">그대로 둔다</text>
+        <text x="584" y="276" class="tm" font-size="14" text-anchor="middle">고치지 않음</text>
+
+        <!-- 아니오 → E -->
+        <path class="ar-fail" d="M310 316 V356" marker-end="url(#ah-fail)"/>
+        <text x="324" y="342" class="c-fail tb" font-size="17">아니오</text>
+        <rect class="box" x="170" y="360" width="280" height="66" rx="14"/>
+        <text x="310" y="389" class="t tb" font-size="20" text-anchor="middle">이웃으로 한 칸 넓힌다</text>
+        <text x="310" y="413" class="tm" font-size="14" text-anchor="middle">선 50개 → 90개</text>
+
+        <!-- 넓히기 루프 -->
+        <path class="ar" d="M170 393 H110 V258 H166" marker-end="url(#ah)"/>
+        <text x="104" y="330" class="tm" font-size="14" text-anchor="end">다시</text>
+        <text x="104" y="348" class="tm" font-size="14" text-anchor="end">판정</text>
+
+        <!-- 3번 다 아니오 → F -->
+        <path class="ar-fail" d="M310 426 V478" marker-end="url(#ah-fail)"/>
+        <text x="324" y="458" class="c-fail tb" font-size="17">세 번 다 아니오</text>
+        <rect class="box-fail" x="150" y="482" width="320" height="110" rx="14"/>
+        <text x="310" y="516" class="t tb" font-size="21" text-anchor="middle">왜 막혔나?</text>
+        <g font-size="15" text-anchor="middle">
+          <rect x="166" y="536" width="90" height="38" rx="19" fill="var(--paper)" stroke="var(--fail)" stroke-width="1.6"/><text x="211" y="560" class="t">빠짐</text>
+          <rect x="265" y="536" width="90" height="38" rx="19" fill="var(--paper)" stroke="var(--fail)" stroke-width="1.6"/><text x="310" y="560" class="t">틀림</text>
+          <rect x="364" y="536" width="90" height="38" rx="19" fill="var(--paper)" stroke="var(--fail)" stroke-width="1.6"/><text x="409" y="560" class="t">군더더기</text>
+        </g>
+        <path class="ar" d="M310 592 V632" marker-end="url(#ah)"/>
+
+        <!-- G 고치기 -->
+        <rect class="box-patch" x="130" y="636" width="360" height="122" rx="14"/>
+        <text x="310" y="668" class="t tb" font-size="21" text-anchor="middle">고친다 (최대 10개)</text>
+        <g font-size="15" text-anchor="middle">
+          <rect x="146" y="686" width="104" height="38" rx="19" fill="var(--paper)" stroke="var(--patch)" stroke-width="1.6"/><text x="198" y="710" class="t">선 넣기</text>
+          <rect x="258" y="686" width="104" height="38" rx="19" fill="var(--paper)" stroke="var(--patch)" stroke-width="1.6"/><text x="310" y="710" class="t">선 빼기</text>
+          <rect x="370" y="686" width="104" height="38" rx="19" fill="var(--paper)" stroke="var(--patch)" stroke-width="1.6"/><text x="422" y="710" class="t">점 바꾸기</text>
+        </g>
+        <text x="310" y="746" class="tm" font-size="13.5" text-anchor="middle">원문을 근거로 본다</text>
+
+        <!-- 원문 -->
+        <path d="M560 660h46l14 14v62h-60z" fill="var(--paper)" stroke="var(--mute)" stroke-width="2"/>
+        <line x1="570" y1="690" x2="608" y2="690" stroke="var(--mute)" stroke-width="2"/>
+        <line x1="570" y1="702" x2="608" y2="702" stroke="var(--mute)" stroke-width="2"/>
+        <line x1="570" y1="714" x2="596" y2="714" stroke="var(--mute)" stroke-width="2"/>
+        <path class="ar" d="M556 698 H496" marker-end="url(#ah)"/>
+        <text x="590" y="760" class="tm" font-size="14" text-anchor="middle">원문</text>
+
+        <path class="ar" d="M310 758 V784" marker-end="url(#ah)"/>
+        <!-- H 반영 -->
+        <rect class="box-graph" x="170" y="788" width="280" height="56" rx="14"/>
+        <text x="310" y="822" class="t tb" font-size="19" text-anchor="middle">그래프와 색인이 함께 바뀐다</text>
+      </svg>
+    </div>
+    <p class="note">코드 기본값: 넓히기 최대 3번, 고치기 최대 10개. 어느 단계에서든 "예"가 나오면 손대지 않는다.</p>
+  </section>
+
+  <!-- 4 -->
+  <section>
+    <h2>고치는 손은 세 개뿐</h2>
+    <div class="hands">
+      <div class="hand">
+        <svg viewBox="0 0 240 90" aria-hidden="true">
+          <circle class="n" cx="30" cy="45" r="12"/><circle class="n" cx="90" cy="45" r="12"/>
+          <text x="120" y="52" class="tm" font-size="22" text-anchor="middle">→</text>
+          <line x1="162" y1="45" x2="210" y2="45" class="s-patch" stroke-width="4"/>
+          <circle class="n" cx="150" cy="45" r="12"/><circle class="n" cx="222" cy="45" r="12"/>
+        </svg>
+        <h3>선 넣기</h3>
+        <p>빠진 사실을 잇는다.</p>
+        <code>insert_edge(주어, 관계, 대상)</code>
+      </div>
+      <div class="hand">
+        <svg viewBox="0 0 240 90" aria-hidden="true">
+          <line class="e" x1="30" y1="45" x2="90" y2="45" style="opacity:1"/>
+          <circle class="n" cx="30" cy="45" r="12"/><circle class="n" cx="90" cy="45" r="12"/>
+          <text x="120" y="52" class="tm" font-size="22" text-anchor="middle">→</text>
+          <line x1="164" y1="45" x2="208" y2="45" class="s-fail" stroke-width="3" stroke-dasharray="4 5"/>
+          <line x1="178" y1="34" x2="196" y2="56" class="s-fail" stroke-width="3.5"/><line x1="196" y1="34" x2="178" y2="56" class="s-fail" stroke-width="3.5"/>
+          <circle class="n" cx="150" cy="45" r="12"/><circle class="n" cx="222" cy="45" r="12"/>
+        </svg>
+        <h3>선 빼기</h3>
+        <p>틀리거나 겹친 선을 지운다.</p>
+        <code>delete_edge(주어, 관계, 대상)</code>
+      </div>
+      <div class="hand">
+        <svg viewBox="0 0 240 90" aria-hidden="true">
+          <line class="e" x1="20" y1="20" x2="50" y2="45" style="opacity:1"/><line class="e" x1="20" y1="72" x2="50" y2="45" style="opacity:1"/><line class="e" x1="90" y1="45" x2="62" y2="45" style="opacity:1"/>
+          <circle class="n" cx="20" cy="20" r="8"/><circle class="n" cx="20" cy="72" r="8"/><circle cx="50" cy="45" r="11" fill="var(--fail-tint)" stroke="var(--fail)" stroke-width="2.5"/><circle class="n" cx="90" cy="45" r="11"/>
+          <text x="125" y="52" class="tm" font-size="22" text-anchor="middle">→</text>
+          <line x1="160" y1="20" x2="210" y2="45" class="s-patch" stroke-width="3"/><line x1="160" y1="72" x2="210" y2="45" class="s-patch" stroke-width="3"/>
+          <circle class="n" cx="160" cy="20" r="8"/><circle class="n" cx="160" cy="72" r="8"/><circle class="n" cx="212" cy="45" r="13"/>
+        </svg>
+        <h3>점 바꾸기</h3>
+        <p>옛 점의 선을 모두 새 점으로 옮기고, 옛 점을 지운다. 둘로 갈린 같은 사람을 하나로 합치는 유일한 손이다.</p>
+        <code>replace_node(옛 점, 새 점)</code>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 -->
+  <section>
+    <div style="display:grid;gap:8px">
+      <h2>우산 이야기로 한 바퀴</h2>
+      <span class="tag" style="justify-self:start">손으로 만든 예시 · 실제로 돌린 결과가 아님</span>
+    </div>
+    <div class="story">
+      <div class="frame">
+        <span class="step">1</span>
+        <h3>질문</h3>
+        <div class="q">민수는 왜 편의점에서 우산을 샀나?</div>
+        <svg viewBox="0 0 220 150" aria-hidden="true">
+          <line class="e" x1="40" y1="30" x2="170" y2="30" style="opacity:1"/>
+          <line class="e" x1="40" y1="100" x2="170" y2="100" style="opacity:1"/>
+          <circle class="n" cx="40" cy="30" r="9"/><circle class="n" cx="170" cy="30" r="9"/>
+          <circle class="n" cx="40" cy="100" r="9"/><circle class="n" cx="170" cy="100" r="9"/>
+          <text x="40" y="58" class="t" font-size="14" text-anchor="middle">민수</text><text x="170" y="58" class="t" font-size="14" text-anchor="middle">우산 구매</text>
+          <text x="40" y="128" class="t" font-size="14" text-anchor="middle">민수 씨</text><text x="170" y="128" class="t" font-size="14" text-anchor="middle">우산</text>
+          <circle class="n" cx="200" cy="140" r="0"/>
+        </svg>
+        <p>꺼낸 조각에 '비' 이야기가 없다.</p>
+      </div>
+      <div class="frame fail">
+        <span class="step" style="color:var(--fail)">2</span>
+        <h3>판정: 아니오 × 3</h3>
+        <svg viewBox="0 0 220 150" aria-hidden="true">
+          <line class="e" x1="40" y1="30" x2="170" y2="30" style="opacity:1"/><line class="e" x1="40" y1="100" x2="170" y2="100" style="opacity:1"/>
+          <line class="e" x1="110" y1="140" x2="190" y2="140" style="opacity:1"/>
+          <circle class="n" cx="40" cy="30" r="9"/><circle class="n" cx="170" cy="30" r="9"/><circle class="n" cx="40" cy="100" r="9"/><circle class="n" cx="170" cy="100" r="9"/>
+          <circle cx="110" cy="140" r="9" fill="var(--paper)" stroke="var(--mute)" stroke-width="2.5"/><circle cx="190" cy="140" r="9" fill="var(--paper)" stroke="var(--mute)" stroke-width="2.5"/>
+          <text x="110" y="124" class="tm" font-size="13" text-anchor="middle">폭우</text><text x="190" y="124" class="tm" font-size="13" text-anchor="middle">점심</text>
+          <text x="40" y="58" class="t" font-size="13" text-anchor="middle">민수</text><text x="170" y="58" class="t" font-size="13" text-anchor="middle">우산 구매</text>
+          <text x="40" y="84" class="t" font-size="13" text-anchor="middle">민수 씨</text><text x="170" y="84" class="t" font-size="13" text-anchor="middle">우산</text>
+        </svg>
+        <p>넓혀서 '폭우'가 보여도 '우산 구매'와 이어지지 않는다.</p>
+      </div>
+      <div class="frame fail">
+        <span class="step" style="color:var(--fail)">3</span>
+        <h3>왜 막혔나?</h3>
+        <svg viewBox="0 0 220 150" aria-hidden="true">
+          <circle class="n" cx="40" cy="40" r="9"/><circle class="n" cx="170" cy="40" r="9"/>
+          <line x1="52" y1="40" x2="158" y2="40" class="s-fail" stroke-width="3" stroke-dasharray="5 6"/>
+          <text x="105" y="30" class="c-fail" font-size="22" text-anchor="middle">?</text>
+          <text x="40" y="70" class="t" font-size="13" text-anchor="middle">폭우</text><text x="170" y="70" class="t" font-size="13" text-anchor="middle">우산 구매</text>
+          <circle class="n" cx="70" cy="118" r="9"/><circle class="n" cx="140" cy="118" r="9"/>
+          <text x="105" y="124" class="c-fail" font-size="18" text-anchor="middle">=</text>
+          <text x="70" y="146" class="t" font-size="13" text-anchor="middle">민수</text><text x="140" y="146" class="t" font-size="13" text-anchor="middle">민수 씨</text>
+        </svg>
+        <p><b>빠짐</b>: 폭우와 우산 구매 사이 선이 없다.<br><b>군더더기</b>: 한 사람이 두 점이다.</p>
+      </div>
+      <div class="frame fix">
+        <span class="step" style="color:var(--patch)">4</span>
+        <h3>고친다</h3>
+        <svg viewBox="0 0 220 150" aria-hidden="true">
+          <line x1="52" y1="40" x2="158" y2="40" class="s-patch" stroke-width="4"/>
+          <circle class="n" cx="40" cy="40" r="9"/><circle class="n" cx="170" cy="40" r="9"/>
+          <text x="105" y="30" class="c-patch" font-size="13" text-anchor="middle">원인</text>
+          <text x="40" y="70" class="t" font-size="13" text-anchor="middle">폭우</text><text x="170" y="70" class="t" font-size="13" text-anchor="middle">우산 구매</text>
+          <line x1="105" y1="118" x2="170" y2="100" class="s-patch" stroke-width="3"/><line x1="105" y1="118" x2="170" y2="136" class="s-patch" stroke-width="3"/>
+          <circle class="n" cx="105" cy="118" r="12"/><circle class="n" cx="170" cy="100" r="7"/><circle class="n" cx="170" cy="136" r="7"/>
+          <text x="105" y="146" class="t" font-size="13" text-anchor="middle">민수</text>
+        </svg>
+        <code>insert_edge("폭우", "원인", "우산 구매")</code>
+        <code>replace_node("민수 씨", "민수")</code>
+        <p>다음에 같은 질문이 오면 첫 판정에서 "예"가 나와 그대로 지나간다.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 -->
+  <section>
+    <h2>고치니 점수가 올랐다</h2>
+    <div class="bars">
+      <div class="legend"><span><i style="background:var(--mute)"></i>작은 모델로 지은 초안</span><span><i style="background:var(--patch)"></i>DeepRefine-8B로 고친 뒤</span></div>
+      <div class="row">
+        <span class="lab">ToG</span>
+        <div class="track">
+          <div class="bar draft" style="width:calc(33.01 / 40 * 100%)">33.01</div>
+          <div class="bar fixed" style="width:calc(38.61 / 40 * 100%)">38.61</div>
+        </div>
+      </div>
+      <div class="row">
+        <span class="lab">Subgraph</span>
+        <div class="track">
+          <div class="bar draft" style="width:calc(30.82 / 40 * 100%)">30.82</div>
+          <div class="bar fixed" style="width:calc(34.87 / 40 * 100%)">34.87</div>
+        </div>
+      </div>
+      <div class="axis"><span></span><div class="ticks"><span>0</span><span>10</span><span>20</span><span>30</span><span>40</span></div></div>
+      <p class="note">평균 token-F1(답이 정답과 겹치는 정도, 0~100). ToG·Subgraph는 그래프에서 답을 찾는 방식 이름이다. HippoRAG2 방식에서는 +1.41점에 그쳤다. 같은 프롬프트에서 학습만 뺀 8B 모델은 35.47, 학습한 8B는 36.74다.</p>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section>
+    <h2>사람이 승인하는 판도 있다</h2>
+    <p>DeepRefine-Skill은 같은 프롬프트를 코딩 에이전트(Claude Code 등)가 돌리게 만든 판이다. 고치기 전에 문 하나가 더 있다. 원판 DeepRefine에는 이 문이 없어서 사람 없이 돈다.</p>
+    <div class="gate scroll">
+      <svg viewBox="0 0 760 150" role="img" aria-label="질의 기록, 판정과 원인, 고칠 후보, 등급 매기기, 사람 승인, 적용 순서의 흐름">
+        <defs><marker id="ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" class="c-mute"/></marker></defs>
+        <g font-size="16" text-anchor="middle">
+          <rect class="box" x="6" y="40" width="112" height="64" rx="12"/><text x="62" y="68" class="t tb">질의 기록</text><text x="62" y="90" class="tm" font-size="12.5">실패한 질문들</text>
+          <path class="ar" d="M118 72 H140" marker-end="url(#ah2)"/>
+          <rect class="box" x="144" y="40" width="112" height="64" rx="12"/><text x="200" y="68" class="t tb">판정·원인</text><text x="200" y="90" class="tm" font-size="12.5">최대 4칸</text>
+          <path class="ar" d="M256 72 H278" marker-end="url(#ah2)"/>
+          <rect class="box-patch" x="282" y="40" width="112" height="64" rx="12"/><text x="338" y="68" class="t tb">고칠 후보</text><text x="338" y="90" class="tm" font-size="12.5">최대 10개</text>
+          <path class="ar" d="M394 72 H416" marker-end="url(#ah2)"/>
+          <rect class="box" x="420" y="40" width="112" height="64" rx="12"/><text x="476" y="68" class="t tb">등급 매기기</text><text x="476" y="90" class="tm" font-size="12.5">높음·중간·낮음</text>
+          <path class="ar" d="M532 72 H554" marker-end="url(#ah2)"/>
+          <rect x="558" y="28" width="86" height="88" rx="12" fill="var(--paper)" stroke="var(--ink)" stroke-width="3"/>
+          <circle cx="601" cy="56" r="11" fill="none" stroke="var(--ink)" stroke-width="2.5"/><path d="M582 96 q19 -26 38 0" fill="none" stroke="var(--ink)" stroke-width="2.5"/>
+          <text x="601" y="138" class="t tb">사람 승인</text>
+          <path class="ar" d="M644 72 H666" marker-end="url(#ah2)"/>
+          <rect class="box-graph" x="670" y="40" width="84" height="64" rx="12"/><text x="712" y="68" class="t tb">적용</text><text x="712" y="90" class="tm" font-size="12.5">되돌리기 저장</text>
+        </g>
+      </svg>
+    </div>
+    <div class="grades">
+      <div class="grade hi"><b>높음</b><span>이미 있는 선이거나 코드에 근거가 있다.</span></div>
+      <div class="grade mid"><b>중간</b><span>양 끝 점만 그래프에 있다.</span></div>
+      <div class="grade lo"><b>낮음 → 거부</b><span>근거가 없다. 새 점을 만드는 선 넣기도 여기다.</span></div>
+    </div>
+  </section>
+
+  <!-- 8 -->
+  <section>
+    <h2>아직 모르는 것</h2>
+    <ul class="unknown">
+      <li>논문 평가 스크립트는 근거·충돌 거름망을 모두 끄고 쟀다. 켰을 때 점수는 모른다.</li>
+      <li>고친 것이 쌓이면 그래프 전체가 더러워지지 않는지 잰 결과는 이번 조사에서 찾지 못했다. 코드는 그 걱정 때문에 "예"면 손대지 않는다고 적어 두었다.</li>
+      <li>DeepRefine-Skill 판은 효과를 잰 숫자가 없다.</li>
+      <li>공개 데모에서는 세 질문 모두 그래프 크기가 그대로였다(점 82·선 84). 고친 것이 없었던 것으로 보인다.</li>
+    </ul>
+  </section>
+
+  <footer class="src">
+    <span>출처 (경로는 lab-notes 기준)</span>
+    <span>knowcomp-kg-landscape/lab/reports/2026-06-llm-kg.md · #DeepRefine, #DeepRefine-Skill</span>
+    <span>DeepRefine/autorefiner/src/deeprefine.py: 100-115(기본값), 448-475(예면 건너뜀), 1635·1753·1817(손 세 개)</span>
+    <span>DeepRefine/autorefiner/src/rag_server/deeprefine_prompt.py: 29-92(판정·원인·고치기 프롬프트)</span>
+    <span>DeepRefine 논문 arXiv 2605.10488: 표 1(점수), 526-529줄(학습 효과)</span>
+  </footer>
+</main>
+
+<script>
+  (function () {
+    var nodes = [[40,40],[105,28],[175,50],[250,34],[60,105],[135,95],[205,118],[268,140],[32,170],[100,178],[170,182],[240,192]];
+    var edges = [[0,1],[1,2],[2,3],[0,4],[1,5],[2,6],[3,7],[4,5],[5,6],[6,7],[4,8],[5,9],[6,10],[7,11],[8,9],[9,10],[10,11],[1,4],[6,11]];
+    var ns = "http://www.w3.org/2000/svg";
+    function el(tag, attrs) { var e = document.createElementNS(ns, tag); for (var k in attrs) e.setAttribute(k, attrs[k]); return e; }
+    function draw(id, mode) {
+      var svg = document.getElementById(id);
+      if (!svg) return;
+      var focus = { 5: 1, 6: 1, 9: 1, 10: 1 };
+      if (mode === "one") {
+        svg.appendChild(el("ellipse", { cx: 152, cy: 140, rx: 82, ry: 66, fill: "var(--patch-tint)", stroke: "var(--patch)", "stroke-width": 2, "stroke-dasharray": "6 5" }));
+      }
+      edges.forEach(function (p) {
+        var a = nodes[p[0]], b = nodes[p[1]];
+        svg.appendChild(el("line", { x1: a[0], y1: a[1], x2: b[0], y2: b[1], "class": "e" }));
+      });
+      nodes.forEach(function (n, i) {
+        var hot = mode === "all" || focus[i];
+        svg.appendChild(el("circle", { cx: n[0], cy: n[1], r: 9, "class": "n" }));
+        if (hot) svg.appendChild(el("circle", { cx: n[0] + 9, cy: n[1] - 9, r: 5, fill: "var(--patch)" }));
+      });
+      if (mode === "one") {
+        svg.appendChild(el("rect", { x: 200, y: 4, width: 92, height: 30, rx: 15, fill: "var(--tint)", stroke: "var(--graph)", "stroke-width": 1.6 }));
+        var t = el("text", { x: 246, y: 24, "text-anchor": "middle", "font-size": 14, "class": "t" }); t.textContent = "질문 하나";
+        svg.appendChild(t);
+        svg.appendChild(el("path", { d: "M232 34 Q 200 70 180 92", fill: "none", stroke: "var(--graph)", "stroke-width": 2, "stroke-dasharray": "4 4" }));
+      }
+    }
+    draw("g-all", "all");
+    draw("g-one", "one");
+  })();
+</script>

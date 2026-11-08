@@ -1,0 +1,352 @@
+<title>그래프와 원문 검색</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  /* Layout: 한 문장 → 창고 셋·LLM 일 넷 → 짓기(한 번) 그림 → 묻기(질문마다) 두 갈래 길 그림 → 세 질문이 가는 칸 → 호출 수 → 모르는 것 */
+  :root {
+    --bg: #f3f5f8;
+    --paper: #ffffff;
+    --ink: #1a2230;
+    --mute: #5b6577;
+    --line: #d9dfe8;
+    --graph: #2f5fb3;
+    --rag: #0f7a72;
+    --check: #5b45b8;
+    --patch: #b8760a;
+    --ok: #1f8a5b;
+    --fail: #c4462f;
+    --graph-tint: color-mix(in srgb, var(--paper) 90%, var(--graph));
+    --rag-tint: color-mix(in srgb, var(--paper) 88%, var(--rag));
+    --check-tint: color-mix(in srgb, var(--paper) 87%, var(--check));
+    --patch-tint: color-mix(in srgb, var(--paper) 86%, var(--patch));
+    --ok-tint: color-mix(in srgb, var(--paper) 88%, var(--ok));
+    --display: "Jua", "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
+    --body: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #10151d; --paper: #19202b; --ink: #e6eaf1; --mute: #9aa3b3; --line: #2b3442;
+      --graph: #7ea3ea; --rag: #4fc6bb; --check: #ab98f2; --patch: #f0b44a; --ok: #5fcf9b; --fail: #ee7c68;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #10151d; --paper: #19202b; --ink: #e6eaf1; --mute: #9aa3b3; --line: #2b3442;
+    --graph: #7ea3ea; --rag: #4fc6bb; --check: #ab98f2; --patch: #f0b44a; --ok: #5fcf9b; --fail: #ee7c68;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--body); line-height: 1.6; font-size: 16px; }
+  main { max-width: 1000px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 96px; display: grid; gap: 80px; }
+  h1, h2, h3 { font-family: var(--display); font-weight: 400; text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(36px, 7vw, 58px); line-height: 1.08; }
+  h2 { font-size: clamp(26px, 4.4vw, 36px); line-height: 1.2; }
+  h3 { font-size: 20px; line-height: 1.3; }
+  p { margin: 0; max-width: 64ch; }
+  a { color: var(--graph); }
+  .lead { font-size: 21px; }
+  section { display: grid; gap: 22px; min-width: 0; }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--mute); }
+  .note { font-size: 14px; color: var(--mute); }
+  .tag { display: inline-block; font-family: var(--mono); font-size: 11.5px; letter-spacing: .04em; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--mute); }
+  :focus-visible { outline: 3px solid var(--graph); outline-offset: 2px; }
+  .hl-graph { color: var(--graph); } .hl-rag { color: var(--rag); } .hl-check { color: var(--check); }
+
+  svg text { font-family: var(--body); }
+  .t { fill: var(--ink); } .tm { fill: var(--mute); } .tb { font-family: var(--display); }
+  .c-mute { fill: var(--mute); } .c-graph { fill: var(--graph); } .c-rag { fill: var(--rag); } .c-check { fill: var(--check); } .c-patch { fill: var(--patch); } .c-ok { fill: var(--ok); }
+  .box { fill: var(--paper); stroke: var(--line); stroke-width: 2; }
+  .box-graph { fill: var(--paper); stroke: var(--graph); stroke-width: 2.2; }
+  .box-rag { fill: var(--paper); stroke: var(--rag); stroke-width: 2.2; }
+  .box-check { fill: var(--check-tint); stroke: var(--check); stroke-width: 2.8; }
+  .box-ok { fill: var(--ok-tint); stroke: var(--ok); stroke-width: 2; }
+  .box-patch { fill: var(--patch-tint); stroke: var(--patch); stroke-width: 2; }
+  .band-graph { fill: var(--graph-tint); }
+  .band-rag { fill: var(--rag-tint); }
+  .ar { stroke: var(--mute); stroke-width: 2.2; fill: none; }
+  .ar-graph { stroke: var(--graph); stroke-width: 2.4; fill: none; }
+  .ar-rag { stroke: var(--rag); stroke-width: 2.4; fill: none; }
+  .ar-check { stroke: var(--check); stroke-width: 2.4; fill: none; }
+  .ar-src { stroke: var(--mute); stroke-width: 1.6; stroke-dasharray: 4 4; fill: none; }
+  .n { fill: var(--paper); stroke: var(--graph); stroke-width: 2.5; }
+  .e { stroke: var(--graph); stroke-width: 2.4; }
+  .scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .fig { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 18px; }
+  .fig svg { display: block; width: 100%; height: auto; }
+
+  .defs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; max-width: 760px; }
+  .def { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px; display: grid; gap: 4px; min-width: 0; }
+  .def b { font-family: var(--display); font-weight: 400; font-size: 19px; }
+  .def span { font-size: 14.5px; color: var(--mute); }
+
+  .parts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+  .shelf { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+  .shelf ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+  .shelf li { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; align-items: center; }
+  .shelf li svg { width: 40px; height: 40px; }
+  .shelf li b { font-family: var(--display); font-weight: 400; font-size: 18px; display: block; line-height: 1.3; }
+  .shelf li span { font-size: 14px; color: var(--mute); }
+
+  .routes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .route { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+  .route .q { font-family: var(--display); font-size: 16.5px; background: var(--graph-tint); border-radius: 10px; padding: 6px 10px; }
+  .route .row { font-size: 13.5px; color: var(--mute); }
+  .route .row b { color: var(--ink); font-weight: 500; }
+  .route .out { font-family: var(--display); font-size: 18px; }
+  .route.r-ok { border-color: var(--ok); } .route.r-patch { border-color: var(--patch); }
+
+  .calls { display: grid; gap: 14px; background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: 18px; }
+  .callrow { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 12px; align-items: center; }
+  .callrow > b { font-family: var(--display); font-weight: 400; font-size: 18px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font-size: 13.5px; padding: 4px 10px; border-radius: 999px; border: 1.6px solid var(--line); background: var(--paper); }
+  .chip.g { border-color: var(--graph); } .chip.c { border-color: var(--check); background: var(--check-tint); } .chip.p { border-color: var(--patch); } .chip.r { border-color: var(--rag); }
+
+  .unknown { display: grid; gap: 10px; padding: 0; margin: 0; list-style: none; }
+  .unknown li { background: var(--paper); border: 1px solid var(--line); border-left: 5px solid var(--mute); border-radius: 10px; padding: 12px 16px; max-width: 760px; }
+  .src { font-family: var(--mono); font-size: 12px; color: var(--mute); display: grid; gap: 4px; word-break: break-all; }
+
+  @media (max-width: 860px) { .routes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 640px) {
+    .defs, .parts, .routes { grid-template-columns: 1fr; }
+    .callrow { grid-template-columns: 1fr; gap: 6px; }
+  }
+</style>
+
+<main>
+  <header style="display:grid;gap:18px">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <span class="eyebrow">제안 구조</span>
+      <span class="tag">아직 돌려 보지 않음</span>
+    </div>
+    <h1>그래프로 잇고, 원문으로 확인한다</h1>
+    <p class="lead"><span class="hl-graph">그래프</span>는 여러 문서에 흩어진 사실을 잇는다.<br><span class="hl-rag">원문 검색</span>은 그 사실이 문서에 정말 있는지 확인한다.</p>
+    <div class="defs">
+      <div class="def"><b class="hl-graph">그래프</b><span>문서에서 뽑은 사실을 점(사람·물건·일)과 선(관계)으로 적은 지도. atlas-rag로 짓는다.</span></div>
+      <div class="def"><b class="hl-rag">원문 검색 = 기본 RAG의 검색</b><span>질문과 비슷한 문서 조각(청크)을 찾아 꺼내는 일. 여기서는 답을 쓰는 데가 아니라 확인하는 데 쓴다.</span></div>
+    </div>
+  </header>
+
+  <section>
+    <h2>창고 셋, LLM이 하는 일 넷</h2>
+    <div class="parts">
+      <div class="shelf">
+        <h3>창고</h3>
+        <ul>
+          <li>
+            <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M7 4h18l8 8v24H7z" fill="var(--paper)" stroke="var(--mute)" stroke-width="2.4"/><line x1="12" y1="18" x2="28" y2="18" stroke="var(--mute)" stroke-width="2"/><line x1="12" y1="25" x2="28" y2="25" stroke="var(--mute)" stroke-width="2"/></svg>
+            <div><b>원문 청크</b><span>문서를 1,000자 안팎으로 자른 조각</span></div>
+          </li>
+          <li>
+            <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="17" cy="17" r="10" fill="var(--rag-tint)" stroke="var(--rag)" stroke-width="3"/><line x1="25" y1="25" x2="35" y2="35" stroke="var(--rag)" stroke-width="4" stroke-linecap="round"/></svg>
+            <div><b class="hl-rag">청크 색인</b><span>청크마다 임베딩을 붙여 둔 찾기표. 기본 RAG의 몫</span></div>
+          </li>
+          <li>
+            <svg viewBox="0 0 40 40" aria-hidden="true"><line class="e" x1="9" y1="10" x2="31" y2="12"/><line class="e" x1="9" y1="10" x2="18" y2="31"/><line class="e" x1="31" y1="12" x2="18" y2="31"/><circle class="n" cx="9" cy="10" r="5"/><circle class="n" cx="31" cy="12" r="5"/><circle class="n" cx="18" cy="31" r="5"/></svg>
+            <div><b class="hl-graph">그래프</b><span>점마다 자기가 나온 청크를 가리키는 선(Source 선)이 붙어 있다</span></div>
+          </li>
+        </ul>
+      </div>
+      <div class="shelf">
+        <h3>LLM이 하는 일</h3>
+        <ul>
+          <li>
+            <svg viewBox="0 0 40 40" aria-hidden="true"><rect x="5" y="9" width="30" height="22" rx="6" fill="var(--paper)" stroke="var(--mute)" stroke-width="2.6"/><text x="20" y="25" class="c-mute tb" font-size="13" text-anchor="middle">뽑기</text></svg>
+            <div><b>뽑기</b><span>청크에서 점과 선을 뽑는다. 지을 때 한 번</span></div>
+          </li>
+          <li>
+            <svg viewBox="0 0 40 40" aria-hidden="true"><rect x="5" y="9" width="30" height="22" rx="6" fill="var(--paper)" stroke="var(--graph)" stroke-width="2.6"/><text x="20" y="25" class="c-graph tb" font-size="13" text-anchor="middle">판정</text></svg>
+            <div><b>판정</b><span>"이 그래프 조각으로 답할 수 있나?"</span></div>
+          </li>
+          <li>
+            <svg viewBox="0 0 40 40" aria-hidden="true"><rect x="5" y="9" width="30" height="22" rx="6" fill="var(--check-tint)" stroke="var(--check)" stroke-width="2.8"/><text x="20" y="25" class="c-check tb" font-size="13" text-anchor="middle">대조</text></svg>
+            <div><b class="hl-check">대조 (새로 붙임)</b><span>"원문에 답하는 문장이 있나? 그래프 선과 맞나?"</span></div>
+          </li>
+          <li>
+            <svg viewBox="0 0 40 40" aria-hidden="true"><rect x="5" y="9" width="30" height="22" rx="6" fill="var(--patch-tint)" stroke="var(--patch)" stroke-width="2.6"/><text x="20" y="25" class="c-patch tb" font-size="13" text-anchor="middle">고침</text></svg>
+            <div><b>고치기</b><span>인용한 문장에 있는 선만 넣거나 바꾼다</span></div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>짓기: 문서를 넣을 때 한 번</h2>
+    <div class="fig scroll">
+      <svg viewBox="0 0 820 300" style="min-width:620px" role="img" aria-label="문서를 청크로 자르고, 한쪽은 임베딩해 청크 색인을 만들고 다른 쪽은 LLM이 뽑아 그래프를 만든다. 그래프의 점은 자기가 나온 청크를 가리킨다.">
+        <defs>
+          <marker id="m1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" class="c-mute"/></marker>
+          <marker id="m1r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" class="c-rag"/></marker>
+          <marker id="m1g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" class="c-graph"/></marker>
+        </defs>
+        <path d="M20 112h52l16 16v64H20z" fill="var(--paper)" stroke="var(--mute)" stroke-width="2.5"/>
+        <text x="54" y="226" class="t tb" font-size="17" text-anchor="middle">문서</text>
+        <path class="ar" d="M96 152 H138" marker-end="url(#m1)"/>
+        <g>
+          <rect x="146" y="104" width="44" height="30" rx="4" fill="var(--paper)" stroke="var(--mute)" stroke-width="2"/>
+          <rect x="146" y="138" width="44" height="30" rx="4" fill="var(--paper)" stroke="var(--mute)" stroke-width="2"/>
+          <rect x="146" y="172" width="44" height="30" rx="4" fill="var(--paper)" stroke="var(--mute)" stroke-width="2"/>
+        </g>
+        <text x="168" y="226" class="t tb" font-size="17" text-anchor="middle">청크</text>
+
+        <path class="ar-rag" d="M196 140 C 250 140, 250 70, 300 70" marker-end="url(#m1r)"/>
+        <path class="ar-graph" d="M196 166 C 250 166, 250 234, 300 234" marker-end="url(#m1g)"/>
+
+        <rect class="box-rag" x="306" y="42" width="170" height="56" rx="14"/>
+        <text x="391" y="66" class="t tb" font-size="17" text-anchor="middle">임베딩</text>
+        <text x="391" y="88" class="tm" font-size="12.5" text-anchor="middle">LLM 없이, 싸다</text>
+        <path class="ar-rag" d="M476 70 H560" marker-end="url(#m1r)"/>
+
+        <rect class="box-graph" x="306" y="206" width="170" height="56" rx="14"/>
+        <text x="391" y="230" class="t tb" font-size="17" text-anchor="middle">LLM이 뽑는다</text>
+        <text x="391" y="252" class="tm" font-size="12.5" text-anchor="middle">청크마다 세 번 묻기</text>
+        <path class="ar-graph" d="M476 234 H560" marker-end="url(#m1g)"/>
+
+        <rect x="566" y="30" width="236" height="80" rx="16" fill="var(--rag-tint)" stroke="var(--rag)" stroke-width="2.2"/>
+        <text x="684" y="64" class="t tb" font-size="19" text-anchor="middle">청크 색인</text>
+        <text x="684" y="90" class="tm" font-size="13" text-anchor="middle">기본 RAG의 검색 창고</text>
+
+        <rect x="566" y="190" width="236" height="96" rx="16" fill="var(--graph-tint)" stroke="var(--graph)" stroke-width="2.2"/>
+        <line class="e" x1="606" y1="226" x2="660" y2="214"/><line class="e" x1="660" y1="214" x2="716" y2="236"/><line class="e" x1="606" y1="226" x2="640" y2="262"/><line class="e" x1="716" y1="236" x2="762" y2="218"/>
+        <circle class="n" cx="606" cy="226" r="8"/><circle class="n" cx="660" cy="214" r="8"/><circle class="n" cx="716" cy="236" r="8"/><circle class="n" cx="640" cy="262" r="8"/><circle class="n" cx="762" cy="218" r="8"/>
+        <text x="740" y="274" class="t tb" font-size="18" text-anchor="middle">그래프</text>
+
+        <path class="ar-src" d="M660 205 V112"/><path class="ar-src" d="M716 227 V112"/><path class="ar-src" d="M762 209 V112"/>
+        <text x="700" y="160" class="tm" font-size="12.5" text-anchor="middle">점 → 나온 청크</text>
+      </svg>
+    </div>
+    <p class="note">청크 색인은 그래프와 같은 청크로 만든다. 새로 모을 자료는 없다.</p>
+  </section>
+
+  <section>
+    <h2>묻기: 질문마다 두 길을 함께 간다</h2>
+    <div class="fig scroll">
+      <svg viewBox="0 0 900 500" style="min-width:700px" role="img" aria-label="질문이 그래프 길과 원문 길로 나뉘어, 그래프 조각의 판정과 원문 청크가 대조에서 만나고, 네 출구 중 하나로 나간다.">
+        <defs>
+          <marker id="m2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" class="c-mute"/></marker>
+          <marker id="m2g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" class="c-graph"/></marker>
+          <marker id="m2r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" class="c-rag"/></marker>
+          <marker id="m2c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" class="c-check"/></marker>
+        </defs>
+
+        <rect class="band-graph" x="150" y="56" width="420" height="108" rx="18"/>
+        <text x="166" y="48" class="c-graph tb" font-size="16">그래프 길 · DeepRefine에서 가져옴</text>
+        <rect class="band-rag" x="150" y="336" width="420" height="108" rx="18"/>
+        <text x="166" y="328" class="c-rag tb" font-size="16">원문 길 · 기본 RAG의 검색</text>
+
+        <rect class="box" x="10" y="216" width="120" height="68" rx="14" style="stroke:var(--graph)"/>
+        <text x="70" y="256" class="t tb" font-size="20" text-anchor="middle">질문</text>
+        <path class="ar-graph" d="M130 250 H146 V110 H176" marker-end="url(#m2g)"/>
+        <path class="ar-rag" d="M146 250 V390 H176" marker-end="url(#m2r)"/>
+
+        <rect class="box-graph" x="180" y="80" width="160" height="60" rx="14"/>
+        <text x="260" y="106" class="t tb" font-size="16.5" text-anchor="middle">그래프 조각</text>
+        <text x="260" y="128" class="tm" font-size="12.5" text-anchor="middle">선 10 → 50 → 90</text>
+        <path class="ar-graph" d="M340 110 H372" marker-end="url(#m2g)"/>
+        <rect class="box-graph" x="376" y="80" width="170" height="60" rx="14"/>
+        <text x="461" y="106" class="t tb" font-size="16.5" text-anchor="middle">판정</text>
+        <text x="461" y="128" class="tm" font-size="12.5" text-anchor="middle">답할 수 있나? 예/아니오</text>
+
+        <rect class="box-rag" x="180" y="360" width="160" height="60" rx="14"/>
+        <text x="260" y="386" class="t tb" font-size="16.5" text-anchor="middle">청크 검색</text>
+        <text x="260" y="408" class="tm" font-size="12.5" text-anchor="middle">비슷한 청크 상위 5개</text>
+        <path class="ar-rag" d="M340 390 H372" marker-end="url(#m2r)"/>
+        <g>
+          <path d="M392 368h34l10 10v40h-44z" fill="var(--paper)" stroke="var(--rag)" stroke-width="2"/>
+          <path d="M412 376h34l10 10v40h-44z" fill="var(--paper)" stroke="var(--rag)" stroke-width="2"/>
+          <path d="M432 384h34l10 10v40h-44z" fill="var(--rag-tint)" stroke="var(--rag)" stroke-width="2.4"/>
+        </g>
+        <text x="510" y="404" class="t tb" font-size="16" text-anchor="middle">근거</text>
+
+        <path class="ar-graph" d="M546 110 H586 V214 H606" marker-end="url(#m2g)"/>
+        <path class="ar-rag" d="M534 404 H586 V286 H606" marker-end="url(#m2r)"/>
+
+        <rect class="box-check" x="610" y="196" width="116" height="108" rx="16"/>
+        <text x="668" y="244" class="t tb" font-size="21" text-anchor="middle">대조</text>
+        <text x="668" y="270" class="c-check" font-size="12.5" text-anchor="middle">새로 붙임</text>
+
+        <path class="ar-check" d="M726 250 H742"/>
+        <path class="ar-check" d="M742 79 V421"/>
+        <path class="ar-check" d="M742 79 H754" marker-end="url(#m2c)"/>
+        <path class="ar-check" d="M742 193 H754" marker-end="url(#m2c)"/>
+        <path class="ar-check" d="M742 307 H754" marker-end="url(#m2c)"/>
+        <path class="ar-check" d="M742 421 H754" marker-end="url(#m2c)"/>
+
+        <rect class="box-ok" x="758" y="44" width="134" height="70" rx="12"/>
+        <text x="825" y="70" class="tm" font-size="12" text-anchor="middle">예 · 근거와 맞음</text>
+        <text x="825" y="96" class="t tb" font-size="17" text-anchor="middle">답한다</text>
+
+        <rect class="box-patch" x="758" y="158" width="134" height="70" rx="12"/>
+        <text x="825" y="184" class="tm" font-size="12" text-anchor="middle">예 · 근거와 다름</text>
+        <text x="825" y="210" class="t tb" font-size="16" text-anchor="middle">③ 선 바꾸기</text>
+
+        <rect class="box-patch" x="758" y="272" width="134" height="70" rx="12"/>
+        <text x="825" y="298" class="tm" font-size="12" text-anchor="middle">아니오 · 근거 있음</text>
+        <text x="825" y="324" class="t tb" font-size="16" text-anchor="middle">② 인용해 넣기</text>
+
+        <rect class="box-ok" x="758" y="386" width="134" height="70" rx="12"/>
+        <text x="825" y="412" class="tm" font-size="12" text-anchor="middle">아니오 · 근거 없음</text>
+        <text x="825" y="438" class="t tb" font-size="16" text-anchor="middle">① "없음" 기록</text>
+
+        <text x="450" y="484" class="tm" font-size="13.5" text-anchor="middle">②③에서 고친 선은 그래프에 들어가고, 다음 질문은 고친 그래프에서 시작한다.</text>
+      </svg>
+    </div>
+  </section>
+
+  <section>
+    <h2>우산 질문 넷이 가는 칸</h2>
+    <p class="note">손으로 만든 예시. 문서는 "점심 무렵 비가 쏟아졌다."와 "민수는 편의점에서 우산을 샀다." 두 장이다. 그래프는 "비"를 놓쳤고, 산 곳을 "약국"으로 잘못 적었다고 하자.</p>
+    <div class="routes">
+      <div class="route r-ok">
+        <div class="q">민수는 무엇을 샀나?</div>
+        <div class="row"><b>판정</b> 예 · <b>근거</b> "우산을 샀다"</div>
+        <div class="out" style="color:var(--ok)">답한다</div>
+      </div>
+      <div class="route r-patch">
+        <div class="q">어디서 샀나?</div>
+        <div class="row"><b>판정</b> 예("약국") · <b>근거</b> "편의점에서"</div>
+        <div class="out" style="color:var(--patch)">③ 약국 → 편의점</div>
+      </div>
+      <div class="route r-patch">
+        <div class="q">왜 샀나?</div>
+        <div class="row"><b>판정</b> 아니오 · <b>근거</b> "비가 쏟아졌다"</div>
+        <div class="out" style="color:var(--patch)">② 비 → 우산 구매 선</div>
+      </div>
+      <div class="route r-ok">
+        <div class="q">얼마에 샀나?</div>
+        <div class="row"><b>판정</b> 아니오 · <b>근거</b> 없음</div>
+        <div class="out" style="color:var(--ok)">① "문서에 없음"</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>질문 하나에 드는 LLM 호출</h2>
+    <div class="calls">
+      <div class="callrow"><b>DeepRefine</b><div class="chips"><span class="chip g">판정 1~3번</span><span class="chip">원인 찾기 0~1번</span><span class="chip p">고치기 0~1번</span></div></div>
+      <div class="callrow"><b>이 제안</b><div class="chips"><span class="chip g">판정 1~3번</span><span class="chip r">청크 검색 (LLM 아님)</span><span class="chip c">대조 1번</span><span class="chip p">고치기 0~1번</span></div></div>
+      <p class="note">대조가 세 사정 중 어느 것인지 가르므로, 원인 찾기를 대신한다고 보았다. 대신 "예"인 질문에도 대조가 한 번 붙는다.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>아직 모르는 것</h2>
+    <ul class="unknown">
+      <li>청크 검색이 맞는 청크를 얼마나 자주 쥐는지. 놓치면 ②가 ①로 잘못 간다. 준비해 둔 비교 실험(<code>12_kg_vs_dense.py</code>)의 원문 검색 줄이 이 비율을 잰다.</li>
+      <li>작은 모델(llama3.1:8b)이 대조 질문 둘을 얼마나 맞히는지.</li>
+      <li>원문 검색만으로도 답이 충분히 나온다면, 그래프 길이 무엇을 더하는지. AutoSchemaKG 논문 표 8에서 원문만 검색한 NV-Embed-v2는 MuSiQue EM 34.7로 그래프 쪽(31.8)보다 높았다.</li>
+    </ul>
+  </section>
+
+  <footer class="src">
+    <span>근거 (경로는 lab-notes 기준)</span>
+    <span>knowcomp-kg-landscape/lab/repos/DeepRefine/autorefiner/src/deeprefine.py:100-115 판정 기본값(선 10·50·90, 최대 3번)</span>
+    <span>knowcomp-kg-landscape/lab/repos/DeepRefine/autorefiner/src/deeprefine.py:708-723 지금은 원문을 그래프 조각에 딸린 청크에서만 모은다</span>
+    <span>autoschemakg-kg-construction/notes.md · 공식 json2csv의 Source 선(점 → 나온 청크)</span>
+    <span>autoschemakg-kg-construction/lab/12_kg_vs_dense.py · 청크 1,000자, bge-m3 상위 5개</span>
+  </footer>
+</main>
