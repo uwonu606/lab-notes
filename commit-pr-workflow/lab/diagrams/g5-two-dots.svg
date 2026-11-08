@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 260" role="img" aria-label="main..feature 는 feature 에서 거슬러 갈 수 있는데 main 에서는 못 가는 커밋 셋. feature..main 은 그 반대로 하나" font-family="'IBM Plex Sans KR', 'Noto Sans KR', system-ui, sans-serif" font-size="18">
+  <style>
+    svg { color: #767676; fill: currentColor; }
+    @media (prefers-color-scheme: dark) { svg { color: #e0e0e0; } }
+  </style>
+  <defs><marker id="ga5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/></marker></defs>
+  <g fill="none" stroke="currentColor" stroke-width="3">
+    <circle cx="120" cy="150" r="22"/><circle cx="300" cy="200" r="22"/>
+    <circle cx="300" cy="90" r="22"/><circle cx="460" cy="90" r="22"/><circle cx="620" cy="90" r="22"/>
+  </g>
+  <g font-family="'IBM Plex Mono', monospace" font-size="15" text-anchor="middle">
+    <text x="120" y="156">m1</text><text x="300" y="206">m2</text>
+    <text x="300" y="96">f1</text><text x="460" y="96">f2</text><text x="620" y="96">f3</text>
+  </g>
+  <path d="M 276 194 L 148 158" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#ga5)"/>
+  <path d="M 276 96 L 148 142" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#ga5)"/>
+  <path d="M 436 90 L 328 90" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#ga5)"/>
+  <path d="M 596 90 L 488 90" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#ga5)"/>
+  <text x="360" y="210" font-family="'IBM Plex Mono', monospace" font-size="14" font-weight="600">main</text>
+  <text x="680" y="96" font-family="'IBM Plex Mono', monospace" font-size="14" font-weight="600">feature</text>
+  <rect x="266" y="50" width="388" height="80" rx="40" fill="none" stroke-width="2.5" stroke-dasharray="6 4" style="stroke:var(--accent,#0E8F75)"/>
+  <text x="460" y="36" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="15" font-weight="600" style="fill:var(--accent,#0E8F75)">main..feature = 3</text>
+  <rect x="266" y="166" width="68" height="68" rx="34" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="6 4" opacity="0.6"/>
+  <text x="300" y="252" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="15" font-weight="600" opacity="0.8">feature..main = 1</text>
+</svg>

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 300" role="img" aria-label="feature 이름표를 지우면 merge commit 쪽은 main 이 넷을 계속 붙들고, squash 쪽은 넷이 아무 이름표에도 안 걸린 채 남는다" font-family="'IBM Plex Sans KR', 'Noto Sans KR', system-ui, sans-serif" font-size="16">
+  <defs><marker id="g8a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/></marker>
+  <marker id="g8b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" style="fill:var(--accent,#0E8F75)"/></marker></defs>
+  <text x="450" y="34" text-anchor="middle" font-size="18" font-weight="600">feature 이름표를 지운다</text>
+  <text x="450" y="56" text-anchor="middle" font-size="13" opacity="0.7">git branch -D feature. GitHub 은 squash 뒤 이걸 자동으로 한다</text>
+
+  <circle cx="60" cy="250" r="16" fill="none" stroke="currentColor" stroke-width="2.5"/>
+  <g fill="none" stroke-width="2.5" style="stroke:var(--accent,#0E8F75)"><circle cx="140" cy="140" r="14"/><circle cx="210" cy="140" r="14"/><circle cx="280" cy="140" r="14"/><circle cx="350" cy="140" r="14"/></g>
+  <path d="M 130 151 L 70 238" fill="none" stroke-width="2.5" marker-end="url(#g8b)" style="stroke:var(--accent,#0E8F75)"/>
+  <path d="M 196 140 L 156 140" fill="none" stroke-width="2.5" marker-end="url(#g8b)" style="stroke:var(--accent,#0E8F75)"/>
+  <path d="M 266 140 L 226 140" fill="none" stroke-width="2.5" marker-end="url(#g8b)" style="stroke:var(--accent,#0E8F75)"/>
+  <path d="M 336 140 L 296 140" fill="none" stroke-width="2.5" marker-end="url(#g8b)" style="stroke:var(--accent,#0E8F75)"/>
+  <circle cx="400" cy="250" r="20" fill="none" stroke-width="3.5" style="stroke:var(--accent,#0E8F75)"/>
+  <text x="400" y="255" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="13" font-weight="600">M</text>
+  <path d="M 380 250 L 78 250" fill="none" stroke-width="2.5" marker-end="url(#g8b)" style="stroke:var(--accent,#0E8F75)"/>
+  <path d="M 392 231 L 358 155" fill="none" stroke-width="3" marker-end="url(#g8b)" style="stroke:var(--accent,#0E8F75)"/>
+  <text x="400" y="290" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="13" font-weight="600">main</text>
+  <text x="245" y="100" text-anchor="middle" font-size="14" style="fill:var(--accent,#0E8F75)">main 이 계속 붙들고 있다</text>
+
+  <line x1="460" y1="70" x2="460" y2="290" stroke="currentColor" stroke-width="1" opacity="0.2"/>
+
+  <circle cx="520" cy="250" r="16" fill="none" stroke="currentColor" stroke-width="2.5"/>
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="5 4" opacity="0.35"><circle cx="600" cy="140" r="14"/><circle cx="670" cy="140" r="14"/><circle cx="740" cy="140" r="14"/><circle cx="810" cy="140" r="14"/></g>
+  <path d="M 590 151 L 530 238" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="5 4" opacity="0.35" marker-end="url(#g8a)"/>
+  <path d="M 656 140 L 616 140" fill="none" stroke="currentColor" stroke-width="2" opacity="0.35" marker-end="url(#g8a)"/>
+  <path d="M 726 140 L 686 140" fill="none" stroke="currentColor" stroke-width="2" opacity="0.35" marker-end="url(#g8a)"/>
+  <path d="M 796 140 L 756 140" fill="none" stroke="currentColor" stroke-width="2" opacity="0.35" marker-end="url(#g8a)"/>
+  <circle cx="860" cy="250" r="20" fill="none" stroke-width="3.5" style="stroke:var(--accent,#0E8F75)"/>
+  <text x="860" y="255" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="13" font-weight="600">S</text>
+  <path d="M 840 250 L 538 250" fill="none" stroke-width="2.5" marker-end="url(#g8b)" style="stroke:var(--accent,#0E8F75)"/>
+  <text x="860" y="290" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="13" font-weight="600">main</text>
+  <text x="705" y="100" text-anchor="middle" font-size="14" opacity="0.7">아무 이름표도 안 가리킨다. 물건은 아직 있다</text>
+</svg>

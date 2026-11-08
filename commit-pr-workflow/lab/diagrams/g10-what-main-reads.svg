@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 300" role="img" aria-label="main 의 git log 를 읽으면 merge commit 쪽은 머지 커밋과 브랜치 커밋이 섞여 나오고, squash 쪽은 PR 제목 한 줄씩만 나오며 세부는 각 커밋의 본문 안에 있다" font-family="'IBM Plex Mono', monospace" font-size="13">
+  <text x="40" y="34" font-family="'IBM Plex Sans KR', sans-serif" font-size="18" font-weight="600">git log main 을 읽으면</text>
+  <rect x="40" y="56" width="400" height="220" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <text x="56" y="82" font-family="'IBM Plex Sans KR', sans-serif" font-size="14" opacity="0.7">merge commit 쪽</text>
+  <text x="56" y="110">950fea9 Merge pull request #1</text>
+  <text x="56" y="132" opacity="0.7">6203e83 fix(lab): handle empty input</text>
+  <text x="56" y="154" opacity="0.7">f6371fc refactor(lab): rename helper</text>
+  <text x="56" y="176" opacity="0.7">7821112 docs(lab): describe feature</text>
+  <text x="56" y="198" opacity="0.7">9b1d208 feat(lab): add feature</text>
+  <text x="56" y="220">3c3ba42 chore: seed</text>
+  <text x="56" y="258" font-family="'IBM Plex Sans KR', sans-serif" font-size="13" opacity="0.7">PR 하나가 6줄. 20개면 100줄 넘게</text>
+
+  <rect x="470" y="56" width="400" height="220" rx="6" fill="none" stroke-width="2" style="stroke:var(--accent,#0E8F75)"/>
+  <text x="486" y="82" font-family="'IBM Plex Sans KR', sans-serif" font-size="14" opacity="0.7">squash 쪽</text>
+  <text x="486" y="110" font-weight="600">0f0980d feat(lab): add feature (#1)</text>
+  <text x="506" y="132" font-size="12" opacity="0.6">  * feat(lab): add feature</text>
+  <text x="506" y="150" font-size="12" opacity="0.6">  * docs(lab): describe feature</text>
+  <text x="506" y="168" font-size="12" opacity="0.6">  * refactor(lab): rename helper</text>
+  <text x="506" y="186" font-size="12" opacity="0.6">  * fix(lab): handle empty input</text>
+  <text x="486" y="220">3c3ba42 chore: seed</text>
+  <text x="486" y="258" font-family="'IBM Plex Sans KR', sans-serif" font-size="13" opacity="0.7">PR 하나가 1줄. 세부는 그 줄의 본문 안에</text>
+</svg>

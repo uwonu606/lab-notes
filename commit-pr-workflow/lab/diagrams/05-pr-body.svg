@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 340" role="img" aria-label="PR 본문의 뼈대. 제목은 type(scope): subject, 절은 Why, Scope, Tradeoffs, Blast Radius, Verification 순서, 40줄 안팎. 이 본문이 그대로 squash 커밋의 본문이 된다" font-family="'IBM Plex Sans KR', 'Noto Sans KR', system-ui, sans-serif" font-size="12">
+  <style>
+    svg { color: #767676; fill: currentColor; }
+    @media (prefers-color-scheme: dark) { svg { color: #e0e0e0; } }
+  </style>
+  <defs>
+    <marker id="arrow5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- PR doc -->
+  <rect x="40" y="20" width="330" height="300" rx="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <text x="56" y="46" font-family="'IBM Plex Mono', monospace" font-size="11" font-weight="600">type(scope): subject</text>
+  <text x="56" y="62" font-size="10" opacity="0.7">feat·fix·docs·refactor·test·chore·perf. 마침표 없음</text>
+  <line x1="40" y1="72" x2="370" y2="72" stroke="currentColor" stroke-width="1" opacity="0.4"/>
+
+  <g font-family="'IBM Plex Mono', monospace" font-size="12" font-weight="600">
+    <text x="56" y="100">## Why</text>
+    <text x="56" y="148">## Scope</text>
+    <text x="56" y="196">## Tradeoffs</text>
+    <text x="56" y="244">## Blast Radius</text>
+    <text x="56" y="292">## Verification</text>
+  </g>
+  <g font-size="10" opacity="0.7">
+    <text x="56" y="116">왜 이 변경이 있는지. 한두 문단. SHA 나열 금지</text>
+    <text x="56" y="164">실제 심벌과 경로를 불릿으로. 파일별 에세이 금지</text>
+    <text x="56" y="212">리뷰어가 물을 만한 버린 대안만. 없으면 절을 뺀다</text>
+    <text x="56" y="260">누가·무엇이 영향받고 왜 안전한지 1~3문장</text>
+    <text x="56" y="308">돌린 경로와 결과. 성능은 before → after 하나</text>
+  </g>
+
+  <!-- ruler -->
+  <line x1="390" y1="80" x2="390" y2="320" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+  <line x1="386" y1="80" x2="394" y2="80" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+  <line x1="386" y1="320" x2="394" y2="320" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+  <text x="400" y="84" font-size="10" opacity="0.7">0줄</text>
+  <text x="400" y="323" font-size="10" opacity="0.7">≈40줄. 넘으면 줄인다</text>
+
+  <!-- arrow to commit -->
+  <path d="M 400 190 L 470 190" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrow5)"/>
+  <text x="435" y="178" text-anchor="middle" font-size="10">그대로</text>
+
+  <!-- squash commit -->
+  <text x="600" y="106" text-anchor="middle" font-size="11" opacity="0.7">squash 커밋 (main 에 남는 하나)</text>
+  <rect x="480" y="116" width="240" height="150" rx="4" fill="none" stroke-width="1.5" style="stroke:var(--accent,#0E8F75)"/>
+  <circle cx="480" cy="116" r="6" style="fill:var(--accent,#0E8F75)"/>
+  <g font-family="'IBM Plex Mono', monospace" font-size="11">
+    <text x="496" y="140">type(scope): subject (#366)</text>
+    <text x="496" y="172" opacity="0.7">## Why …</text>
+    <text x="496" y="190" opacity="0.7">## Scope …</text>
+    <text x="496" y="208" opacity="0.7">## Blast Radius …</text>
+    <text x="496" y="226" opacity="0.7">## Verification …</text>
+  </g>
+  <text x="600" y="252" text-anchor="middle" font-size="10" opacity="0.7">본문 = PR 본문</text>
+</svg>

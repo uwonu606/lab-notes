@@ -1,0 +1,233 @@
+<title>git 물건과 이름표</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;600&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root { --bg:#FAFAF7; --ink:#1F2328; --muted:#6B7280; --line:#D6D9DE; --accent:#0E8F75; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg:#15171B; --ink:#E6E8EB; --muted:#9AA1AB; --line:#3A3F47; --accent:#3FD1A8; } }
+  :root[data-theme="dark"] { --bg:#15171B; --ink:#E6E8EB; --muted:#9AA1AB; --line:#3A3F47; --accent:#3FD1A8; }
+  body { background:var(--bg); color:var(--ink); font-family:'IBM Plex Sans KR','Noto Sans KR',system-ui,sans-serif; font-size:17px; line-height:1.6; padding-inline:20px; padding-block:48px 80px; }
+  main { max-width:880px; margin-inline:auto; }
+  header { margin-bottom: 56px; }
+  header h1 { font-size:40px; font-weight:600; margin:0 0 10px; line-height:1.2; text-wrap:balance; }
+  header p { margin:0; color:var(--muted); font-size:18px; max-width:40ch; }
+  section { margin-bottom:72px; display:flex; flex-direction:column; gap:14px; }
+  section h2 { font-size:26px; font-weight:600; margin:0; line-height:1.3; text-wrap:balance; }
+  section h2 code { font-family:'IBM Plex Mono',monospace; font-size:0.85em; }
+  section p { margin:0; max-width:48ch; color:var(--muted); }
+  figure { margin:0; overflow-x:auto; }
+  figure svg { display:block; width:100%; height:auto; min-width:600px; color:var(--ink); }
+  .one { font-size:22px; color:var(--ink); max-width:36ch; font-weight:600; text-wrap:balance; }
+  hr { border:0; border-top:1px solid var(--line); margin:0 0 72px; }
+  @media (max-width:480px) { header h1 { font-size:30px; } section h2 { font-size:22px; } }
+</style>
+<main>
+<header>
+  <h1>git 물건과 이름표</h1>
+  <p>amend, rebase, squash 가 전부 같은 한 가지 일이라는 것을 그림 여섯 장으로.</p>
+</header>
+
+<section>
+  <p class="one">커밋은 물건이다. 한번 만들면 못 고친다.</p>
+  <figure><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 260" role="img" aria-label="커밋 하나는 파일 스냅샷, 부모 포인터, 메시지를 담은 덩어리이고 그 전체가 해시 하나로 이름 지어진다" font-family="'IBM Plex Sans KR', 'Noto Sans KR', system-ui, sans-serif" font-size="18">
+  <defs><marker id="ga1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/></marker></defs>
+  <rect x="60" y="40" width="360" height="180" rx="14" fill="none" stroke="currentColor" stroke-width="3"/>
+  <text x="240" y="90" text-anchor="middle">파일 전부의 스냅샷</text>
+  <line x1="100" y1="110" x2="380" y2="110" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+  <text x="240" y="145" text-anchor="middle">부모 커밋 하나를 가리킴</text>
+  <line x1="100" y1="165" x2="380" y2="165" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+  <text x="240" y="200" text-anchor="middle">메시지, 저자</text>
+  <path d="M 440 130 L 520 130" fill="none" stroke="currentColor" stroke-width="3" marker-end="url(#ga1)"/>
+  <text x="540" y="140" font-family="'IBM Plex Mono', monospace" font-size="30" font-weight="600" style="fill:var(--accent,#0E8F75)">5bf2b15</text>
+  <text x="540" y="172" font-size="14" opacity="0.7">전체를 요약한 해시</text>
+  <text x="400" y="248" text-anchor="middle" font-size="15" opacity="0.7">한 글자만 달라도 다른 해시. 그래서 커밋은 고칠 수 없다</text>
+</svg></figure>
+</section>
+
+<section>
+  <p class="one">브랜치는 이름표다. 커밋 하나만 가리킨다.</p>
+  <figure><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 240" role="img" aria-label="커밋 셋이 부모를 가리키며 이어져 있고, main 이라는 이름표는 맨 끝 커밋 하나만 가리킨다" font-family="'IBM Plex Sans KR', 'Noto Sans KR', system-ui, sans-serif" font-size="18">
+  <defs><marker id="ga2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/></marker></defs>
+  <g fill="none" stroke="currentColor" stroke-width="3">
+    <circle cx="150" cy="150" r="26"/><circle cx="380" cy="150" r="26"/><circle cx="610" cy="150" r="26"/>
+  </g>
+  <g font-family="'IBM Plex Mono', monospace" font-size="16" text-anchor="middle">
+    <text x="150" y="156">c1</text><text x="380" y="156">c2</text><text x="610" y="156">c3</text>
+  </g>
+  <path d="M 352 150 L 180 150" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#ga2)"/>
+  <path d="M 582 150 L 410 150" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#ga2)"/>
+  <text x="266" y="138" text-anchor="middle" font-size="13" opacity="0.7">부모</text>
+  <text x="496" y="138" text-anchor="middle" font-size="13" opacity="0.7">부모</text>
+  <path d="M 570 50 L 660 50 L 672 62 L 660 74 L 570 74 Z" fill="none" stroke-width="3" style="stroke:var(--accent,#0E8F75)"/>
+  <text x="615" y="67" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="16" font-weight="600" style="fill:var(--accent,#0E8F75)">main</text>
+  <path d="M 610 78 L 610 116" fill="none" stroke-width="3" marker-end="url(#ga2)" style="stroke:var(--accent,#0E8F75)"/>
+  <text x="400" y="222" text-anchor="middle" font-size="15" opacity="0.7">이름표는 파일 하나. 안에는 해시 하나. 커밋 하나만 가리킨다</text>
+</svg></figure>
+</section>
+
+<hr>
+
+<section>
+  <h2>그래서 <code>amend</code> 는: 새 물건 하나, 이름표 한 칸</h2>
+  <figure><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 320" role="img" aria-label="amend 는 c2 를 부모로 하는 새 커밋 c3 프라임을 만들고 이름표를 그리로 옮긴다. 옛 c3 는 남는다" font-family="'IBM Plex Sans KR', 'Noto Sans KR', system-ui, sans-serif" font-size="18">
+  <defs><marker id="ga3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/></marker></defs>
+  <text x="40" y="40" font-size="15" opacity="0.7">전</text>
+  <g fill="none" stroke="currentColor" stroke-width="3">
+    <circle cx="150" cy="80" r="22"/><circle cx="330" cy="80" r="22"/><circle cx="510" cy="80" r="22"/>
+  </g>
+  <g font-family="'IBM Plex Mono', monospace" font-size="15" text-anchor="middle"><text x="150" y="86">c1</text><text x="330" y="86">c2</text><text x="510" y="86">c3</text></g>
+  <path d="M 306 80 L 176 80" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#ga3)"/>
+  <path d="M 486 80 L 356 80" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#ga3)"/>
+  <path d="M 570 62 L 660 62 L 672 74 L 660 86 L 570 86 Z" fill="none" stroke-width="2.5" style="stroke:var(--accent,#0E8F75)"/>
+  <text x="615" y="79" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="14" font-weight="600" style="fill:var(--accent,#0E8F75)">feature</text>
+  <path d="M 568 74 L 538 78" fill="none" stroke-width="2.5" marker-end="url(#ga3)" style="stroke:var(--accent,#0E8F75)"/>
+
+  <line x1="40" y1="130" x2="760" y2="130" stroke="currentColor" stroke-width="1" opacity="0.2"/>
+  <text x="40" y="170" font-size="15" opacity="0.7">후: git commit --amend</text>
+
+  <g fill="none" stroke="currentColor" stroke-width="3">
+    <circle cx="150" cy="240" r="22"/><circle cx="330" cy="240" r="22"/>
+  </g>
+  <circle cx="510" cy="200" r="22" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="5 4" opacity="0.5"/>
+  <circle cx="510" cy="280" r="22" fill="none" stroke-width="3" style="stroke:var(--accent,#0E8F75)"/>
+  <g font-family="'IBM Plex Mono', monospace" font-size="15" text-anchor="middle">
+    <text x="150" y="246">c1</text><text x="330" y="246">c2</text>
+    <text x="510" y="206" opacity="0.5">c3</text><text x="510" y="286" style="fill:var(--accent,#0E8F75)">c3'</text>
+  </g>
+  <path d="M 306 240 L 176 240" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#ga3)"/>
+  <path d="M 490 208 L 356 234" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="5 4" opacity="0.5" marker-end="url(#ga3)"/>
+  <path d="M 490 272 L 356 246" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#ga3)"/>
+  <path d="M 570 262 L 660 262 L 672 274 L 660 286 L 570 286 Z" fill="none" stroke-width="2.5" style="stroke:var(--accent,#0E8F75)"/>
+  <text x="615" y="279" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="14" font-weight="600" style="fill:var(--accent,#0E8F75)">feature</text>
+  <path d="M 568 274 L 538 278" fill="none" stroke-width="2.5" marker-end="url(#ga3)" style="stroke:var(--accent,#0E8F75)"/>
+  <text x="560" y="204" font-size="13" opacity="0.6">남아 있다. 아무도 안 가리킬 뿐</text>
+</svg></figure>
+  <p>커밋 수는 그대로 3. 옛 c3 는 지워지지 않았다.</p>
+</section>
+
+<section>
+  <h2>그래서 <code>rebase</code> 는: 새 물건 여럿, 이름표 한 칸</h2>
+  <figure><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 320" role="img" aria-label="rebase 는 wip 커밋 일곱을 다시 재생해 새 커밋 넷을 만들고 이름표를 옮긴다. 옛 일곱은 남고, reflog 가 이름표의 이동을 적는다" font-family="'IBM Plex Sans KR', 'Noto Sans KR', system-ui, sans-serif" font-size="18">
+  <defs><marker id="ga4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/></marker></defs>
+  <circle cx="90" cy="180" r="22" fill="none" stroke="currentColor" stroke-width="3"/>
+  <text x="90" y="186" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="15">m</text>
+
+  <!-- old row -->
+  <text x="40" y="70" font-size="14" opacity="0.6">옛 7개. 이름표가 떠났다</text>
+  <path d="M 110 168 C 130 100, 150 90, 175 90" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="5 4" opacity="0.45"/>
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="5 4" opacity="0.45">
+    <circle cx="190" cy="90" r="15"/><circle cx="270" cy="90" r="15"/><circle cx="350" cy="90" r="15"/><circle cx="430" cy="90" r="15"/>
+    <circle cx="510" cy="90" r="15"/><circle cx="590" cy="90" r="15"/><circle cx="670" cy="90" r="15"/>
+  </g>
+  <line x1="205" y1="90" x2="655" y2="90" stroke="currentColor" stroke-width="2" stroke-dasharray="5 4" opacity="0.45"/>
+  <g font-family="'IBM Plex Mono', monospace" font-size="12" text-anchor="middle" opacity="0.55">
+    <text x="190" y="118">wip</text><text x="270" y="118">wip</text><text x="350" y="118">fix</text><text x="430" y="118">wip</text>
+    <text x="510" y="118">docs</text><text x="590" y="118">oops</text><text x="670" y="118">fix</text>
+  </g>
+
+  <!-- new row -->
+  <text x="40" y="280" font-size="14" opacity="0.7">새 4개. 전부 새 해시</text>
+  <path d="M 110 192 C 130 260, 150 270, 175 270" fill="none" stroke-width="2.5" style="stroke:var(--accent,#0E8F75)"/>
+  <line x1="200" y1="270" x2="660" y2="270" stroke-width="2.5" style="stroke:var(--accent,#0E8F75)"/>
+  <g fill="none" stroke-width="3" style="stroke:var(--accent,#0E8F75)">
+    <circle cx="200" cy="270" r="20"/><circle cx="360" cy="270" r="20"/><circle cx="520" cy="270" r="20"/><circle cx="680" cy="270" r="20"/>
+  </g>
+  <g font-family="'IBM Plex Mono', monospace" font-size="13" text-anchor="middle">
+    <text x="200" y="306">feat</text><text x="360" y="306">docs</text><text x="520" y="306">refactor</text><text x="680" y="306">fix</text>
+  </g>
+  <path d="M 720 236 L 800 236 L 812 248 L 800 260 L 720 260 Z" fill="none" stroke-width="2.5" style="stroke:var(--accent,#0E8F75)"/>
+  <text x="760" y="253" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="14" font-weight="600" style="fill:var(--accent,#0E8F75)">feature</text>
+  <path d="M 718 252 L 706 262" fill="none" stroke-width="2.5" marker-end="url(#ga4)" style="stroke:var(--accent,#0E8F75)"/>
+
+  <!-- reflog -->
+  <rect x="700" y="60" width="180" height="70" rx="6" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.7"/>
+  <text x="712" y="84" font-family="'IBM Plex Mono', monospace" font-size="13" font-weight="600" opacity="0.8">reflog</text>
+  <text x="712" y="106" font-size="12" opacity="0.7">feature: wip(7번째) → fix</text>
+  <text x="712" y="122" font-size="12" opacity="0.7">이름표가 옮겨 간 일기</text>
+</svg></figure>
+  <p>7개를 다시 재생해 4개를 만들었다. 옛 7개는 남는다. reflog 가 이름표의 이동을 기억한다.</p>
+</section>
+
+<section>
+  <h2><code>main..feature</code> 는 두 이름표의 차이</h2>
+  <figure><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 260" role="img" aria-label="main..feature 는 feature 에서 거슬러 갈 수 있는데 main 에서는 못 가는 커밋 셋. feature..main 은 그 반대로 하나" font-family="'IBM Plex Sans KR', 'Noto Sans KR', system-ui, sans-serif" font-size="18">
+  <defs><marker id="ga5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/></marker></defs>
+  <g fill="none" stroke="currentColor" stroke-width="3">
+    <circle cx="120" cy="150" r="22"/><circle cx="300" cy="200" r="22"/>
+    <circle cx="300" cy="90" r="22"/><circle cx="460" cy="90" r="22"/><circle cx="620" cy="90" r="22"/>
+  </g>
+  <g font-family="'IBM Plex Mono', monospace" font-size="15" text-anchor="middle">
+    <text x="120" y="156">m1</text><text x="300" y="206">m2</text>
+    <text x="300" y="96">f1</text><text x="460" y="96">f2</text><text x="620" y="96">f3</text>
+  </g>
+  <path d="M 276 194 L 148 158" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#ga5)"/>
+  <path d="M 276 96 L 148 142" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#ga5)"/>
+  <path d="M 436 90 L 328 90" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#ga5)"/>
+  <path d="M 596 90 L 488 90" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#ga5)"/>
+  <text x="360" y="210" font-family="'IBM Plex Mono', monospace" font-size="14" font-weight="600">main</text>
+  <text x="680" y="96" font-family="'IBM Plex Mono', monospace" font-size="14" font-weight="600">feature</text>
+  <rect x="266" y="50" width="388" height="80" rx="40" fill="none" stroke-width="2.5" stroke-dasharray="6 4" style="stroke:var(--accent,#0E8F75)"/>
+  <text x="460" y="36" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="15" font-weight="600" style="fill:var(--accent,#0E8F75)">main..feature = 3</text>
+  <rect x="266" y="166" width="68" height="68" rx="34" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="6 4" opacity="0.6"/>
+  <text x="300" y="252" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="15" font-weight="600" opacity="0.8">feature..main = 1</text>
+</svg></figure>
+  <p>feature 에서 거슬러 갈 수 있는데 main 에서는 못 가는 커밋. 점 두 개의 왼쪽이 빼는 쪽.</p>
+</section>
+
+<section>
+  <h2>브랜치를 main 에 얹는 세 가지</h2>
+  <figure><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 360" role="img" aria-label="같은 브랜치를 main 에 얹는 세 방법. merge commit 은 부모 둘인 커밋 하나에 브랜치 커밋 셋이 딸려 오고, squash 는 부모 하나인 새 커밋 하나, rebase 는 새 해시 셋" font-family="'IBM Plex Sans KR', 'Noto Sans KR', system-ui, sans-serif" font-size="16">
+  <defs><marker id="ga6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/></marker></defs>
+
+  <!-- column 1: merge commit -->
+  <text x="150" y="36" text-anchor="middle" font-weight="600">merge commit</text>
+  <text x="150" y="58" text-anchor="middle" font-size="13" opacity="0.7">main 에 1 + 3 이 보인다</text>
+  <circle cx="60" cy="250" r="16" fill="none" stroke="currentColor" stroke-width="2.5"/>
+  <text x="60" y="255" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="12">m</text>
+  <g fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="110" cy="150" r="14"/><circle cx="160" cy="150" r="14"/><circle cx="210" cy="150" r="14"/></g>
+  <path d="M 96 156 L 70 238" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#ga6)"/>
+  <path d="M 146 150 L 124 150" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#ga6)"/>
+  <path d="M 196 150 L 174 150" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#ga6)"/>
+  <circle cx="260" cy="250" r="18" fill="none" stroke-width="3" style="stroke:var(--accent,#0E8F75)"/>
+  <text x="260" y="255" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="12" style="fill:var(--accent,#0E8F75)">M</text>
+  <path d="M 242 250 L 78 250" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#ga6)"/>
+  <path d="M 250 234 L 220 162" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#ga6)"/>
+  <text x="260" y="290" text-anchor="middle" font-size="12" opacity="0.7">부모 둘</text>
+  <text x="260" y="320" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="12" font-weight="600">main</text>
+
+  <line x1="310" y1="20" x2="310" y2="340" stroke="currentColor" stroke-width="1" opacity="0.2"/>
+
+  <!-- column 2: squash -->
+  <text x="450" y="36" text-anchor="middle" font-weight="600">squash merge</text>
+  <text x="450" y="58" text-anchor="middle" font-size="13" opacity="0.7">main 에 1. 브랜치와 연결 없음</text>
+  <circle cx="360" cy="250" r="16" fill="none" stroke="currentColor" stroke-width="2.5"/>
+  <text x="360" y="255" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="12">m</text>
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3" opacity="0.5"><circle cx="410" cy="150" r="14"/><circle cx="460" cy="150" r="14"/><circle cx="510" cy="150" r="14"/></g>
+  <path d="M 396 156 L 370 238" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3" opacity="0.5" marker-end="url(#ga6)"/>
+  <path d="M 446 150 L 424 150" fill="none" stroke="currentColor" stroke-width="2" opacity="0.5" marker-end="url(#ga6)"/>
+  <path d="M 496 150 L 474 150" fill="none" stroke="currentColor" stroke-width="2" opacity="0.5" marker-end="url(#ga6)"/>
+  <text x="540" y="155" font-family="'IBM Plex Mono', monospace" font-size="11" opacity="0.6">feature 그대로</text>
+  <circle cx="560" cy="250" r="18" fill="none" stroke-width="3" style="stroke:var(--accent,#0E8F75)"/>
+  <text x="560" y="255" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="12" style="fill:var(--accent,#0E8F75)">S</text>
+  <path d="M 542 250 L 378 250" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#ga6)"/>
+  <text x="560" y="290" text-anchor="middle" font-size="12" opacity="0.7">부모 하나. 내용은 셋의 합</text>
+  <text x="560" y="320" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="12" font-weight="600">main</text>
+
+  <line x1="610" y1="20" x2="610" y2="340" stroke="currentColor" stroke-width="1" opacity="0.2"/>
+
+  <!-- column 3: rebase -->
+  <text x="750" y="36" text-anchor="middle" font-weight="600">rebase merge</text>
+  <text x="750" y="58" text-anchor="middle" font-size="13" opacity="0.7">main 에 3. 전부 새 해시</text>
+  <circle cx="660" cy="250" r="16" fill="none" stroke="currentColor" stroke-width="2.5"/>
+  <text x="660" y="255" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="12">m</text>
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="4 3" opacity="0.4"><circle cx="710" cy="150" r="14"/><circle cx="760" cy="150" r="14"/><circle cx="810" cy="150" r="14"/></g>
+  <g fill="none" stroke-width="3" style="stroke:var(--accent,#0E8F75)"><circle cx="720" cy="250" r="16"/><circle cx="780" cy="250" r="16"/><circle cx="840" cy="250" r="16"/></g>
+  <g font-family="'IBM Plex Mono', monospace" font-size="11" text-anchor="middle" style="fill:var(--accent,#0E8F75)"><text x="720" y="254">f1'</text><text x="780" y="254">f2'</text><text x="840" y="254">f3'</text></g>
+  <path d="M 704 250 L 678 250" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#ga6)"/>
+  <path d="M 764 250 L 738 250" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#ga6)"/>
+  <path d="M 824 250 L 798 250" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#ga6)"/>
+  <text x="780" y="290" text-anchor="middle" font-size="12" opacity="0.7">옛 셋은 남고 새 셋이 줄을 선다</text>
+  <text x="840" y="320" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="12" font-weight="600">main</text>
+</svg></figure>
+  <p>Matt 의 저장소는 첫 번째라 main 이 459개. pstack 은 두 번째라 main 이 86개.</p>
+</section>
+</main>

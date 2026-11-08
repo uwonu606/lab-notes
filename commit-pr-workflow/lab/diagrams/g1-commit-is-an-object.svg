@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 260" role="img" aria-label="커밋 하나는 파일 스냅샷, 부모 포인터, 메시지를 담은 덩어리이고 그 전체가 해시 하나로 이름 지어진다" font-family="'IBM Plex Sans KR', 'Noto Sans KR', system-ui, sans-serif" font-size="18">
+  <style>
+    svg { color: #767676; fill: currentColor; }
+    @media (prefers-color-scheme: dark) { svg { color: #e0e0e0; } }
+  </style>
+  <defs><marker id="ga1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/></marker></defs>
+  <rect x="60" y="40" width="360" height="180" rx="14" fill="none" stroke="currentColor" stroke-width="3"/>
+  <text x="240" y="90" text-anchor="middle">파일 전부의 스냅샷</text>
+  <line x1="100" y1="110" x2="380" y2="110" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+  <text x="240" y="145" text-anchor="middle">부모 커밋 하나를 가리킴</text>
+  <line x1="100" y1="165" x2="380" y2="165" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+  <text x="240" y="200" text-anchor="middle">메시지, 저자</text>
+  <path d="M 440 130 L 520 130" fill="none" stroke="currentColor" stroke-width="3" marker-end="url(#ga1)"/>
+  <text x="540" y="140" font-family="'IBM Plex Mono', monospace" font-size="30" font-weight="600" style="fill:var(--accent,#0E8F75)">5bf2b15</text>
+  <text x="540" y="172" font-size="14" opacity="0.7">전체를 요약한 해시</text>
+  <text x="400" y="248" text-anchor="middle" font-size="15" opacity="0.7">한 글자만 달라도 다른 해시. 그래서 커밋은 고칠 수 없다</text>
+</svg>

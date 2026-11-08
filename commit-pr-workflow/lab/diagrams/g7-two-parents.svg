@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 340" role="img" aria-label="merge commit 은 부모 화살표가 둘이라 main 에서 브랜치 커밋 넷에 닿고, squash 는 부모 화살표가 하나라 닿지 않는다" font-family="'IBM Plex Sans KR', 'Noto Sans KR', system-ui, sans-serif" font-size="16">
+  <defs><marker id="g7a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/></marker>
+  <marker id="g7b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" style="fill:var(--accent,#0E8F75)"/></marker></defs>
+
+  <text x="220" y="36" text-anchor="middle" font-weight="600" font-size="20">merge commit</text>
+  <text x="220" y="60" text-anchor="middle" font-size="14" opacity="0.7">부모 화살표 둘</text>
+  <circle cx="60" cy="280" r="18" fill="none" stroke="currentColor" stroke-width="2.5"/>
+  <text x="60" y="285" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="12">seed</text>
+  <g fill="none" stroke-width="2.5" style="stroke:var(--accent,#0E8F75)"><circle cx="140" cy="150" r="16"/><circle cx="220" cy="150" r="16"/><circle cx="300" cy="150" r="16"/><circle cx="380" cy="150" r="16"/></g>
+  <path d="M 128 162 L 72 266" fill="none" stroke-width="2.5" marker-end="url(#g7b)" style="stroke:var(--accent,#0E8F75)"/>
+  <path d="M 204 150 L 158 150" fill="none" stroke-width="2.5" marker-end="url(#g7b)" style="stroke:var(--accent,#0E8F75)"/>
+  <path d="M 284 150 L 238 150" fill="none" stroke-width="2.5" marker-end="url(#g7b)" style="stroke:var(--accent,#0E8F75)"/>
+  <path d="M 364 150 L 318 150" fill="none" stroke-width="2.5" marker-end="url(#g7b)" style="stroke:var(--accent,#0E8F75)"/>
+  <circle cx="420" cy="280" r="22" fill="none" stroke-width="3.5" style="stroke:var(--accent,#0E8F75)"/>
+  <text x="420" y="286" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="14" font-weight="600">M</text>
+  <path d="M 398 280 L 80 280" fill="none" stroke-width="2.5" marker-end="url(#g7b)" style="stroke:var(--accent,#0E8F75)"/>
+  <path d="M 410 260 L 388 166" fill="none" stroke-width="3" marker-end="url(#g7b)" style="stroke:var(--accent,#0E8F75)"/>
+  <text x="420" y="322" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="13" font-weight="600">main</text>
+  <text x="300" y="215" text-anchor="middle" font-size="14" style="fill:var(--accent,#0E8F75)">main 에서 4개가 닿는다</text>
+
+  <line x1="460" y1="20" x2="460" y2="330" stroke="currentColor" stroke-width="1" opacity="0.2"/>
+
+  <text x="680" y="36" text-anchor="middle" font-weight="600" font-size="20">squash merge</text>
+  <text x="680" y="60" text-anchor="middle" font-size="14" opacity="0.7">부모 화살표 하나</text>
+  <circle cx="520" cy="280" r="18" fill="none" stroke="currentColor" stroke-width="2.5"/>
+  <text x="520" y="285" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="12">seed</text>
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="5 4" opacity="0.5"><circle cx="600" cy="150" r="16"/><circle cx="680" cy="150" r="16"/><circle cx="760" cy="150" r="16"/><circle cx="840" cy="150" r="16"/></g>
+  <path d="M 588 162 L 532 266" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="5 4" opacity="0.5" marker-end="url(#g7a)"/>
+  <path d="M 664 150 L 618 150" fill="none" stroke="currentColor" stroke-width="2" opacity="0.5" marker-end="url(#g7a)"/>
+  <path d="M 744 150 L 698 150" fill="none" stroke="currentColor" stroke-width="2" opacity="0.5" marker-end="url(#g7a)"/>
+  <path d="M 824 150 L 778 150" fill="none" stroke="currentColor" stroke-width="2" opacity="0.5" marker-end="url(#g7a)"/>
+  <circle cx="880" cy="280" r="22" fill="none" stroke-width="3.5" style="stroke:var(--accent,#0E8F75)"/>
+  <text x="880" y="286" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="14" font-weight="600">S</text>
+  <path d="M 858 280 L 540 280" fill="none" stroke-width="2.5" marker-end="url(#g7b)" style="stroke:var(--accent,#0E8F75)"/>
+  <text x="880" y="322" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="13" font-weight="600">main</text>
+  <text x="720" y="215" text-anchor="middle" font-size="14" opacity="0.7">4개로 가는 화살표가 없다</text>
+  <text x="850" y="120" text-anchor="middle" font-size="12" opacity="0.6">feature 이름표만 붙들고 있다</text>
+</svg>

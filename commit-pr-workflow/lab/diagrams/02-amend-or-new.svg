@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 220" role="img" aria-label="고침이 방금 만든 커밋에 속하면 amend 로 그 커밋을 다시 쓰고, 떼어낼 수 있으면 새 커밋을 만드는 갈림" font-family="'IBM Plex Sans KR', 'Noto Sans KR', system-ui, sans-serif" font-size="12">
+  <style>
+    svg { color: #767676; fill: currentColor; }
+    @media (prefers-color-scheme: dark) { svg { color: #e0e0e0; } }
+  </style>
+  <defs>
+    <marker id="arrow2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- current chain -->
+  <line x1="50" y1="110" x2="140" y2="110" stroke="currentColor" stroke-width="1.5"/>
+  <g fill="currentColor"><circle cx="50" cy="110" r="7"/><circle cx="95" cy="110" r="7"/><circle cx="140" cy="110" r="7"/></g>
+  <text x="140" y="90" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="10" opacity="0.7">HEAD</text>
+  <text x="95" y="142" text-anchor="middle" font-size="11" opacity="0.7">고칠 것이 생겼다</text>
+
+  <!-- question -->
+  <rect x="185" y="84" width="130" height="52" rx="6" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <text x="250" y="106" text-anchor="middle">방금 만든 커밋에</text>
+  <text x="250" y="123" text-anchor="middle">속하는 고침인가?</text>
+
+  <!-- yes -->
+  <path d="M 315 98 L 385 56" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrow2)"/>
+  <text x="335" y="68" font-size="11">예</text>
+  <line x1="400" y1="50" x2="490" y2="50" stroke="currentColor" stroke-width="1.5"/>
+  <g fill="currentColor"><circle cx="400" cy="50" r="7"/><circle cx="445" cy="50" r="7"/></g>
+  <circle cx="490" cy="50" r="7" style="fill:var(--accent,#0E8F75)"/>
+  <circle cx="490" cy="50" r="12" fill="none" stroke-dasharray="3 2" style="stroke:var(--accent,#0E8F75)"/>
+  <text x="530" y="46" font-weight="600" font-family="'IBM Plex Mono', monospace">amend</text>
+  <text x="530" y="63" font-size="11" opacity="0.7">같은 커밋을 다시 쓴다. 개수는 그대로</text>
+
+  <!-- no -->
+  <path d="M 315 122 L 385 164" fill="none" stroke="currentColor" stroke-width="1.5" marker-end="url(#arrow2)"/>
+  <text x="330" y="160" font-size="11">아니오</text>
+  <line x1="400" y1="170" x2="535" y2="170" stroke="currentColor" stroke-width="1.5"/>
+  <g fill="currentColor"><circle cx="400" cy="170" r="7"/><circle cx="445" cy="170" r="7"/><circle cx="490" cy="170" r="7"/></g>
+  <circle cx="535" cy="170" r="7" style="fill:var(--accent,#0E8F75)"/>
+  <text x="575" y="166" font-weight="600" font-family="'IBM Plex Mono', monospace">new commit</text>
+  <text x="575" y="183" font-size="11" opacity="0.7">떼어낼 수 있으면 하나 더</text>
+</svg>

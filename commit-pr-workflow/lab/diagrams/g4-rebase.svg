@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 320" role="img" aria-label="rebase 는 wip 커밋 일곱을 다시 재생해 새 커밋 넷을 만들고 이름표를 옮긴다. 옛 일곱은 남고, reflog 가 이름표의 이동을 적는다" font-family="'IBM Plex Sans KR', 'Noto Sans KR', system-ui, sans-serif" font-size="18">
+  <style>
+    svg { color: #767676; fill: currentColor; }
+    @media (prefers-color-scheme: dark) { svg { color: #e0e0e0; } }
+  </style>
+  <defs><marker id="ga4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/></marker></defs>
+  <circle cx="90" cy="180" r="22" fill="none" stroke="currentColor" stroke-width="3"/>
+  <text x="90" y="186" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="15">m</text>
+
+  <!-- old row -->
+  <text x="40" y="70" font-size="14" opacity="0.6">옛 7개. 이름표가 떠났다</text>
+  <path d="M 110 168 C 130 100, 150 90, 175 90" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="5 4" opacity="0.45"/>
+  <g fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="5 4" opacity="0.45">
+    <circle cx="190" cy="90" r="15"/><circle cx="270" cy="90" r="15"/><circle cx="350" cy="90" r="15"/><circle cx="430" cy="90" r="15"/>
+    <circle cx="510" cy="90" r="15"/><circle cx="590" cy="90" r="15"/><circle cx="670" cy="90" r="15"/>
+  </g>
+  <line x1="205" y1="90" x2="655" y2="90" stroke="currentColor" stroke-width="2" stroke-dasharray="5 4" opacity="0.45"/>
+  <g font-family="'IBM Plex Mono', monospace" font-size="12" text-anchor="middle" opacity="0.55">
+    <text x="190" y="118">wip</text><text x="270" y="118">wip</text><text x="350" y="118">fix</text><text x="430" y="118">wip</text>
+    <text x="510" y="118">docs</text><text x="590" y="118">oops</text><text x="670" y="118">fix</text>
+  </g>
+
+  <!-- new row -->
+  <text x="40" y="280" font-size="14" opacity="0.7">새 4개. 전부 새 해시</text>
+  <path d="M 110 192 C 130 260, 150 270, 175 270" fill="none" stroke-width="2.5" style="stroke:var(--accent,#0E8F75)"/>
+  <line x1="200" y1="270" x2="660" y2="270" stroke-width="2.5" style="stroke:var(--accent,#0E8F75)"/>
+  <g fill="none" stroke-width="3" style="stroke:var(--accent,#0E8F75)">
+    <circle cx="200" cy="270" r="20"/><circle cx="360" cy="270" r="20"/><circle cx="520" cy="270" r="20"/><circle cx="680" cy="270" r="20"/>
+  </g>
+  <g font-family="'IBM Plex Mono', monospace" font-size="13" text-anchor="middle">
+    <text x="200" y="306">feat</text><text x="360" y="306">docs</text><text x="520" y="306">refactor</text><text x="680" y="306">fix</text>
+  </g>
+  <path d="M 720 236 L 800 236 L 812 248 L 800 260 L 720 260 Z" fill="none" stroke-width="2.5" style="stroke:var(--accent,#0E8F75)"/>
+  <text x="760" y="253" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="14" font-weight="600" style="fill:var(--accent,#0E8F75)">feature</text>
+  <path d="M 718 252 L 706 262" fill="none" stroke-width="2.5" marker-end="url(#ga4)" style="stroke:var(--accent,#0E8F75)"/>
+
+  <!-- reflog -->
+  <rect x="700" y="60" width="180" height="70" rx="6" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.7"/>
+  <text x="712" y="84" font-family="'IBM Plex Mono', monospace" font-size="13" font-weight="600" opacity="0.8">reflog</text>
+  <text x="712" y="106" font-size="12" opacity="0.7">feature: wip(7번째) → fix</text>
+  <text x="712" y="122" font-size="12" opacity="0.7">이름표가 옮겨 간 일기</text>
+</svg>

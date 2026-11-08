@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 240" role="img" aria-label="커밋 셋이 부모를 가리키며 이어져 있고, main 이라는 이름표는 맨 끝 커밋 하나만 가리킨다" font-family="'IBM Plex Sans KR', 'Noto Sans KR', system-ui, sans-serif" font-size="18">
+  <style>
+    svg { color: #767676; fill: currentColor; }
+    @media (prefers-color-scheme: dark) { svg { color: #e0e0e0; } }
+  </style>
+  <defs><marker id="ga2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/></marker></defs>
+  <g fill="none" stroke="currentColor" stroke-width="3">
+    <circle cx="150" cy="150" r="26"/><circle cx="380" cy="150" r="26"/><circle cx="610" cy="150" r="26"/>
+  </g>
+  <g font-family="'IBM Plex Mono', monospace" font-size="16" text-anchor="middle">
+    <text x="150" y="156">c1</text><text x="380" y="156">c2</text><text x="610" y="156">c3</text>
+  </g>
+  <path d="M 352 150 L 180 150" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#ga2)"/>
+  <path d="M 582 150 L 410 150" fill="none" stroke="currentColor" stroke-width="2" marker-end="url(#ga2)"/>
+  <text x="266" y="138" text-anchor="middle" font-size="13" opacity="0.7">부모</text>
+  <text x="496" y="138" text-anchor="middle" font-size="13" opacity="0.7">부모</text>
+  <path d="M 570 50 L 660 50 L 672 62 L 660 74 L 570 74 Z" fill="none" stroke-width="3" style="stroke:var(--accent,#0E8F75)"/>
+  <text x="615" y="67" text-anchor="middle" font-family="'IBM Plex Mono', monospace" font-size="16" font-weight="600" style="fill:var(--accent,#0E8F75)">main</text>
+  <path d="M 610 78 L 610 116" fill="none" stroke-width="3" marker-end="url(#ga2)" style="stroke:var(--accent,#0E8F75)"/>
+  <text x="400" y="222" text-anchor="middle" font-size="15" opacity="0.7">이름표는 파일 하나. 안에는 해시 하나. 커밋 하나만 가리킨다</text>
+</svg>

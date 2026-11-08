@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 270" role="img" aria-label="PR stack. 맨 아래 PR 은 main 을 향하고, 그 위 브랜치는 각각 바로 아래 브랜치의 끝 커밋에서 갈라져 그 브랜치를 base 로 삼는다. 올릴 때는 아래부터" font-family="'IBM Plex Sans KR', 'Noto Sans KR', system-ui, sans-serif" font-size="12">
+  <style>
+    svg { color: #767676; fill: currentColor; }
+    @media (prefers-color-scheme: dark) { svg { color: #e0e0e0; } }
+  </style>
+  <defs>
+    <marker id="arrow4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+    </marker>
+  </defs>
+
+  <!-- main -->
+  <line x1="40" y1="225" x2="860" y2="225" stroke="currentColor" stroke-width="2"/>
+  <text x="40" y="250" font-family="'IBM Plex Mono', monospace" font-size="11" opacity="0.7">main (trunk)</text>
+  <circle cx="110" cy="225" r="7" fill="currentColor"/>
+
+  <!-- A -->
+  <path d="M 110 225 C 110 175, 130 165, 170 165" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <line x1="170" y1="165" x2="330" y2="165" stroke="currentColor" stroke-width="1.5"/>
+  <g fill="currentColor"><circle cx="200" cy="165" r="6"/><circle cx="265" cy="165" r="6"/><circle cx="330" cy="165" r="6"/></g>
+  <text x="200" y="190" font-family="'IBM Plex Mono', monospace" font-size="11" font-weight="600">PR A</text>
+  <text x="240" y="190" font-size="11" opacity="0.7">root. base 는 main</text>
+
+  <!-- B -->
+  <path d="M 330 165 C 330 115, 350 105, 390 105" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <line x1="390" y1="105" x2="550" y2="105" stroke="currentColor" stroke-width="1.5"/>
+  <g fill="currentColor"><circle cx="420" cy="105" r="6"/><circle cx="485" cy="105" r="6"/><circle cx="550" cy="105" r="6"/></g>
+  <text x="420" y="130" font-family="'IBM Plex Mono', monospace" font-size="11" font-weight="600">PR B</text>
+  <text x="460" y="130" font-size="11" opacity="0.7">base 는 A 브랜치</text>
+  <text x="345" y="140" font-size="10" opacity="0.7">A 의 끝 커밋 위로 rebase</text>
+
+  <!-- C -->
+  <path d="M 550 105 C 550 55, 570 45, 610 45" fill="none" stroke="currentColor" stroke-width="1.5"/>
+  <line x1="610" y1="45" x2="770" y2="45" stroke="currentColor" stroke-width="1.5"/>
+  <g fill="currentColor"><circle cx="640" cy="45" r="6"/><circle cx="705" cy="45" r="6"/><circle cx="770" cy="45" r="6"/></g>
+  <text x="640" y="70" font-family="'IBM Plex Mono', monospace" font-size="11" font-weight="600">PR C</text>
+  <text x="680" y="70" font-size="11" opacity="0.7">base 는 B 브랜치</text>
+  <text x="565" y="80" font-size="10" opacity="0.7">B 의 끝 커밋 위로 rebase</text>
+
+  <!-- landing order -->
+  <path d="M 830 200 L 830 70" fill="none" stroke-width="1.5" marker-end="url(#arrow4)" style="stroke:var(--accent,#0E8F75)"/>
+  <text x="830" y="215" text-anchor="middle" font-size="10" style="fill:var(--accent,#0E8F75)">올리는 순서</text>
+  <text x="830" y="60" text-anchor="middle" font-size="10" style="fill:var(--accent,#0E8F75)">아래부터 위로</text>
+</svg>

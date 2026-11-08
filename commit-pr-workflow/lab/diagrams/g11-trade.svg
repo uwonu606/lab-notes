@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 260" role="img" aria-label="squash 로 얻는 것은 main 한 줄이 PR 하나라는 읽기 쉬움이고, 잃는 것은 PR 안의 커밋 단위로 bisect 와 blame 을 하는 정밀함이다. poteto 는 그 정밀함을 PR 을 작게 쪼개는 것으로 되찾는다" font-family="'IBM Plex Sans KR', 'Noto Sans KR', system-ui, sans-serif" font-size="16">
+  <text x="230" y="40" text-anchor="middle" font-size="20" font-weight="600" style="fill:var(--accent,#0E8F75)">얻는 것</text>
+  <text x="230" y="80" text-anchor="middle">main 한 줄 = PR 하나</text>
+  <text x="230" y="108" text-anchor="middle" font-size="14" opacity="0.7">되돌리기도 PR 단위로 한 번</text>
+  <text x="230" y="136" text-anchor="middle" font-size="14" opacity="0.7">wip, oops 가 main 에 안 남는다</text>
+
+  <line x1="450" y1="20" x2="450" y2="160" stroke="currentColor" stroke-width="1" opacity="0.2"/>
+
+  <text x="670" y="40" text-anchor="middle" font-size="20" font-weight="600" opacity="0.8">잃는 것</text>
+  <text x="670" y="80" text-anchor="middle">PR 안의 커밋 단위 정밀함</text>
+  <text x="670" y="108" text-anchor="middle" font-size="14" opacity="0.7">bisect 가 PR 하나를 통째로 가리킨다</text>
+  <text x="670" y="136" text-anchor="middle" font-size="14" opacity="0.7">blame 이 4개 대신 1개를 가리킨다</text>
+
+  <rect x="60" y="180" width="780" height="60" rx="8" fill="none" stroke-width="2" style="stroke:var(--accent,#0E8F75)"/>
+  <text x="450" y="205" text-anchor="middle" font-size="15">poteto 의 답: 잃는 정밀함은 PR 을 작게 쪼개서 되찾는다</text>
+  <text x="450" y="228" text-anchor="middle" font-size="13" opacity="0.7">"Prefer five narrow PRs to one large PR." 커밋 하나가 PR 하나가 될 크기면, squash 해도 main 의 한 줄이 충분히 작다</text>
+</svg>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 240" role="img" aria-label="이름표를 잃은 커밋의 시간표. reflog 가 30일 기억하고, 그 뒤 gc 가 지우면 그때 정말 사라진다. 복구하기 힘들다는 말은 그 뒤의 일이다" font-family="'IBM Plex Sans KR', 'Noto Sans KR', system-ui, sans-serif" font-size="15">
+  <defs><marker id="g9a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/></marker></defs>
+  <line x1="60" y1="130" x2="860" y2="130" stroke="currentColor" stroke-width="3" marker-end="url(#g9a)"/>
+  <g stroke="currentColor" stroke-width="3"><line x1="120" y1="115" x2="120" y2="145"/><line x1="420" y1="115" x2="420" y2="145"/><line x1="700" y1="115" x2="700" y2="145"/></g>
+  <text x="120" y="95" text-anchor="middle" font-weight="600">이름표를 잃음</text>
+  <text x="120" y="175" text-anchor="middle" font-size="13" opacity="0.7">branch -D, rebase, amend</text>
+  <text x="420" y="95" text-anchor="middle" font-weight="600">reflog 만료</text>
+  <text x="420" y="175" text-anchor="middle" font-size="13" opacity="0.7">기본 30일 (닿지 않는 것)</text>
+  <text x="700" y="95" text-anchor="middle" font-weight="600">git gc 가 지움</text>
+  <text x="700" y="175" text-anchor="middle" font-size="13" opacity="0.7">물건이 정말 없어진다</text>
+  <rect x="130" y="122" width="280" height="16" rx="8" style="fill:var(--accent,#0E8F75)" opacity="0.25"/>
+  <text x="270" y="60" text-anchor="middle" font-size="14" style="fill:var(--accent,#0E8F75)">여기까진 해시나 reflog 로 되살린다</text>
+  <text x="780" y="60" text-anchor="middle" font-size="14" opacity="0.8">"복구하기 힘들다"는 여기</text>
+  <text x="450" y="222" text-anchor="middle" font-size="13" opacity="0.6">GitHub 서버는 PR 의 커밋을 refs/pull/N/head 이름표로 계속 붙들어서, PR 페이지에서는 그 뒤에도 보인다</text>
+</svg>
